@@ -1,0 +1,31 @@
+FROM bcgovimages/von-image:py36-1.14-1
+
+USER root
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+USER $user
+
+# Add and install Indy Agent code
+ADD requirements*.txt ./
+
+RUN pip3 install --no-cache-dir -r requirements.txt -r requirements.dev.txt
+
+ADD aries_cloudagent ./aries_cloudagent
+ADD bin ./bin
+ADD README.md ./
+ADD scripts ./scripts
+ADD setup.py ./
+
+RUN pip3 install --no-cache-dir -e .
+
+RUN mkdir shop logs && chown -R indy:indy shop logs && chmod -R ug+rw shop logs
+
+# Add and install shop code
+ADD shop/requirements.txt ./shop/requirements.txt
+RUN pip3 install --no-cache-dir -r shop/requirements.txt
+
+ADD shop ./shop
+COPY shop/start.sh start.sh
+RUN chmod +x ./start.sh
+
+ENTRYPOINT ["./start.sh"]
