@@ -56,18 +56,15 @@ app = Flask(__name__, static_folder=path)
 print("INSTANCE PATH IS:",  app.instance_path)
 
 #### START interface routes
-
 @app.route("/home/", methods=["GET"])
 def render_interface():
     name = os.getenv("ROLE")
     return render_template("interface.html", name=name)
 
-
 @app.route("/status/", methods=["GET"])
 def get_status():
     status = ob.get_status()
     return make_response(json.dumps(status), 200)
-
 
 @app.route("/create_invite/", methods=["GET"])
 def make_inv():
