@@ -1,0 +1,140 @@
+
+Anoncreds transaction protocol
+Plaintext:
+
+(Bank agent(s) write cred schema + def for payment confirmation to the ledger)
+(User choses to buy product. Completes anonymous payment for required amount)
+--> Bank issues proof of paymen to the user
+--> User initiates connection with Vendor through their public did (
+--> User proves that they are responsible for a given transaction id
+    --var 1---
+(The vendor packages users goods, labelling it with a unique package number)
+(The vendor posts the package to the shipping service)
+--> The vendor issues a credential to the user confirming their package number, alogn with the DID of the shipping service (may not be necessary)
+--> The user initiates a connection with the shipper through their endpoint speicifed in their diddoc
+--> the shipper requests proof-of-package ownership (snd self-attested address -- mb in the proof or not?)
+--> The user proves they own the credential for a package, and provides their address
+(The shipping service posts the package to the specified address)
+
+--ver 2--
+
+---> The vendor issues a credential to the user confirming their package numebr ((and RoP)))
+(vendor ships the package)
+---> The shipping service receives the package, issues a credential to the vendor confirming possefssion of package
+---> the vendor presents proof to the user that the shipping service is in possession of package
+---> The user initaitses connection with shipping servcie
+---> The shipping service requests proof of package ownership. user obliges
+---> ...and provices addresss
+(the shipping sercice posts package to speicifed address)
+
+
+End result *should* (i.e. i think) be that there is no externally correlatable user behavior
+
+
+---Sample Json---
+-->NB: could jhave some extra info in the creds/proof reqs that could be used by the/an app, 
+	--but just for simpl kept it to what i think to be minimally viable
+
+
+
+----Credential Schemas----
+
+#1: payment confirmation schema. issued by bank to: user 
+{
+	"name": "payment_confirmation", 
+	"version": "1.0",
+	"attrs": ["transaction_id","timestamp"]
+}
+
+
+#2: package ownership schema. issued by vendor to: user
+{
+	"name": "package_cred", 
+	"version": "1.0",
+	"attrs": ["package_id","status","timestamp","shipper_did"]    //shipping likely already known (via app code/content) but leaving here regardless
+}
+
+
+#3: [[for protocol ver. 2]]schema for receipt of package. issued by shipping service to: vendor  [[[ ver 2 schema ]]]
+{
+	"name": "receipt_of_package", 
+	"version": "1.0",
+	"attrs": ["package_no","timestamp"]
+}
+
+
+
+-----Proof Requests-----
+
+--> NB: credential def ids wouldl also be good (better?) 
+	-- as i guess a bit more robust but a bit less easy to mainatain
+
+//zkp based payment service such that payment can be anonymous as poss. 
+//as not currently decided (seem to be some based on Hyperled fabric that could be used)
+//transaction_id just a generic placeholder for some unique identifier of atransaction
+#1: proof of payment. requested by: vendor to: user
+{
+	"connection_id": conn_id, 
+	"trace": 0,
+	"proof_request": {
+		"name": "proof_of_payment",
+		"version": "1.0",
+		"requested_attrs": {
+			{
+				"name": "transaction_id", 
+			 	"restrictions": [{"issuer_did": bank_did}]
+			}, 
+			{
+				"name": "timestamp", 
+				"restrictions": [{"issuer_did": bank_did}]
+			}
+		}, 
+		"requested_predicates": {}
+	}
+}
+
+
+#2: proof of package-ownership. requested by: shipper to: user
+{
+	"connection_id": conn_id, 
+	"trace": 0,
+	"proof_request": {
+		"name": "proof_of_package_ownership",
+		"version": "1.0",
+		"requested_attrs": {
+			{
+				"name": "package_no", 
+			 	"restrictions": [{"issuer_did": vendor_public_did}]
+			}, 
+			{
+				"name": "timestamp", 
+				"restrictions": [{"issuer_did": vendor_public_di}]
+			}
+		}, 
+		"requested_predicates": {}
+	}
+}
+
+#3:[[[for protocol ver 2]]] proof of package status. requested by: user to: vendor
+{
+	"connection_id": conn_id, 
+	"trace": 0,
+	"proof_request": {
+		"name": "proof_of_shipped_goods",
+		"version": "1.0",
+		"requested_attrs": {
+			{
+				"name": "status", 
+			 	"restrictions": [{"issuer_did": shipper_pub_did}]
+			}, 
+			{
+				"name": "package_no", 
+			 	"restrictions": [{"issuer_did": shipper_pub_did}]
+			}, 
+			{
+				"name": "timestamp", 
+				"restrictions": [{"issuer_did": shipper_pub_did}]
+			}
+		}, 
+		"requested_predicates": {}
+}

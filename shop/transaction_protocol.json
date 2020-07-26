@@ -1,0 +1,195 @@
+
+anoncreds_transaction_protocol
+
+variation 2: 
+
+nb: all coms will have anonymous pairwise dids
+nb: details of indy/aries protocols skipped for convenience ((e.g. cred offer, cred req, cred pres === cred pres))
+
+stage 1: User requests a product from a vendor [[This would be through application code]]
+
+---> User completes payment through anonmymous payment system. 
+
+---> Bank issues credential prooving that the user is responsible for a given transaction id
+
+---> The user initiates contact with the Vendor through the public DID 
+
+
+stage 2: User proves payment
+
+---> (user initiates contact with vendor through publilc DID)
+
+---> Vendor sends proof-request to user
+
+---> User provides credentials from pauyment service confirming proof-of-payment of required amount for given product
+
+
+stage 3: Vendor packages and ships product
+
+---> (Vendor packages the parcel, and labels it with a unique identifier)
+
+---> (Vendor ships the parcel to the shipping service)
+
+---> Shipping service confirms they are in possession of package
+
+---> Vendor issues the user with a credential confirming proof of package number (effectively proof of ownership), and that parcel with shipping service
+
+
+stage 4: User contacts shipping service
+
+---> ..through DID provided in credential from vendor
+
+---> Shipper requests proof of package id from user
+
+---> User presents proof of package ownershio
+
+---> shipper acknowledges
+
+---> User sends address to shipper
+
+---> Shipper sends package to user
+
+
+
+
+Alternatives:  
+
+--> Have exta exchange between the vendor, shipper, and user. 
+	--> This involves the seller issuing the package credential
+	--> then the shipper issuing a confirmation of receipt credential to the vendor
+	--> then the vendor presenting a proof-of-receipt-of-package at the shipping service to user
+	--> the user then contacts the shipper, who requests proof of ownership
+	--> the user proves, using the credentials issued by the vendor, that they own the package
+	--> the user then sends their address to the shipping service. 
+
+Uncertainties: 
+
+	--> The application-side steps that would initiate the above agent behavior
+	--> The method of transporting some imformation, such as address: dont think basic aries messaging is secured, or maybe i am wrong. either way more application-code stuff. 
+	--> i dont think ZKP needed anywhere (what I mean by that is no need for req_preds)
+
+	--> Whether more information needs to be included in credentials (but not revealed)
+		--> specifically some way of tying a did to credential without allowing
+		 -- for correlatable identity. e.g. is it proof enough that you have a package number
+		 -- issued by the correct did? i wan tto say yes, but perhaops not. 
+
+
+
+//cred schemas
+
+//schema for proof pf payment. transaction by: bank
+{
+	"name": "payment_confirmation", 
+	"version": "1.0",
+	"attrs": ["transaction_id","timestamp"]
+}
+
+{
+	"name": "package_cred", 
+	"version": "1.0",
+	"attrs": ["package_id","status","timestamp","shipper_did"]    //shipping likely already known (via app code/content) but leaving here regardless
+}
+
+//schema for proof pf payment. transaction by: shipper. [[version 2]]
+{
+	"name": "receipt_of_package", 
+	"version": "1.0",
+	"attrs": ["package_no","timestamp"]
+}
+
+
+//proofs
+//requesting proof of payment
+//##this is a placeholder. no payment service has been decided on, just something 
+//zkp based such that payment can be anonymous as poss
+{
+	"connection_id": conn_id, 
+	"trace": 0,
+	"proof_request": {
+		"name": "proof_of_payment",
+		"version": "1.0",
+		"requested_attrs": {
+			{
+				"name": "transaction_id", 
+			 	"restrictions": [{"issuer_did": bank_did}]
+			}, 
+			{
+				"name": "timestamp", 
+				"restrictions": [{"issuer_did": bank_did}]
+			}
+		}, 
+		"requested_predicates": {}
+	}
+}
+
+
+//schema for proof of packae #1
+
+
+//requesting proof of package ownership. all that should be needed is credential for a given packkage signed by appropriate vnedor
+{
+	"connection_id": conn_id, 
+	"trace": 0,
+	"proof_request": {
+		"name": "proof_of_package_ownership",
+		"version": "1.0",
+		"requested_attrs": {
+			{
+				"name": "package_no", 
+			 	"restrictions": [{"issuer_did": vendor_public_did}]
+			}, 
+			{
+				"name": "timestamp", 
+				"restrictions": [{"issuer_did": vendor_public_di}]
+			}
+		}, 
+		"requested_predicates": {}
+	}
+}
+
+//requesting proof of package ownership. all that should be needed is credential for a given packkage signed by appropriate vnedor
+{
+	"connection_id": conn_id, 
+	"trace": 0,
+	"proof_request": {
+		"name": "proof_of_package_ownership",
+		"version": "1.0",
+		"requested_attrs": {
+			{
+				"name": "package_no", 
+			 	"restrictions": [{"issuer_did": vendor_public_did}]
+			}, 
+			{
+				"name": "timestamp", 
+				"restrictions": [{"issuer_did": vendor_public_di}]
+			}
+		}, 
+		"requested_predicates": {}
+	}
+}
+
+//requesting proof shipped goods
+{
+	"connection_id": conn_id, 
+	"trace": 0,
+	"proof_request": {
+		"name": "proof_of_shipped_goods",
+		"version": "1.0",
+		"requested_attrs": {
+			{
+				"name": "status", 
+			 	"restrictions": [{"issuer_did": shipper_pub_did}]
+			}, 
+			{
+				"name": "package_n0", 
+			 	"restrictions": [{"issuer_did": shipper_pub_did}]
+			}, 
+			{
+				"name": "timestamp", 
+				"restrictions": [{"issuer_did": shipper_pub_did}]
+			}
+		}, 
+		"requested_predicates": {}
+	}
+}
+

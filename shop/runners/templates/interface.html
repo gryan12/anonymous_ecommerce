@@ -1,0 +1,134 @@
+<!doctype html>
+
+<head>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/mainpage.css') }}"/>
+    <!--link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/mvp.css') }}"/-->
+</head>
+
+<body>
+<title> Welcome to the demo controller interface! </title>
+{% if name %}
+<h1> {{ name }} controller is up! </h1>
+{% else %}
+<h1> Sorry, no controller is active! </h1>
+{% endif %}
+<div id ="like_button.js">
+</div>
+
+<div id = "inputstuff">
+    <Button id = "status" onclick="getStatus()" value="statusButton">Get Server Status</Button>
+    <Button id = "issue_cred" onclick="issueCredential()" value ="credbutton">Issue Credential</Button>
+    <Button id = "req_proof" onclick="requestProof()" value="proofbutton">Request Proof</Button>
+    <Button id = "inv_but" onclick="createInvite()" value="proofbutton">Create Invite</Button>
+    <Button id = "get_conns" onclick="getConnections()" value="connButton">Check Connection History</Button>
+    <Button id = "get_active_conns" onclick="getActiveConnections()" value="activeConnButton">Check active connections</Button>
+
+    <form action="/receive_invite" id="invForm" name=inviteForm method="post" enctype="multipart/form-data">
+        <textarea id="recInv" rows="20", cols="60" name="invite"></textarea>
+        <input type="submit" value="submit"/>
+    </form>
+    <form action="/set_dids" name=didForm method="post">
+        Bank Did <textarea id="bank_did_box" name="bank_did"></textarea>
+        Shipper Did<textarea id="shipper_did_box" name="shipper_did"></textarea>
+        Vendor Did<textarea id="vendor_did_box" name="vendor_did"></textarea>
+        <input type="submit" value="submit"/>
+    </form>
+    <form action="/send_message" name=msgForm method="post" onsubmit="return false;">
+        Send Message: <textarea id="msgArea" name="message"></textarea>
+        <input type="submit" value="submit"/>
+    </form>
+
+
+
+<div id = "demo">
+</div>
+
+<div id = "sourceTest">
+</div>
+<script>
+ function getStatus() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+       document.getElementById("demo").innerHTML =
+       this.responseText;
+     }
+   };
+   xhttp.open("GET", "/status", true);
+   xhttp.send();
+ }
+</script>
+
+<script>
+ function createInvite() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+       document.getElementById("demo").innerHTML =
+       this.responseText;
+     }
+   };
+   xhttp.open("GET", "/create_invite", true);
+   xhttp.send();
+ }
+</script>
+
+<script>
+ function getConnections() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+       document.getElementById("demo").innerHTML =
+       this.responseText;
+     }
+   };
+   xhttp.open("GET", "/get_connections", true);
+   xhttp.send();
+ }
+</script>
+<script>
+ function getActiveConnections() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+       document.getElementById("demo").innerHTML =
+       this.responseText;
+     }
+   };
+   xhttp.open("GET", "/get_active_connections", true);
+   xhttp.send();
+ }
+</script>
+<script>
+ function issueCredential() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+       document.getElementById("demo").innerHTML =
+       this.responseText;
+     }
+   };
+   xhttp.open("GET", "/issue_cred", true);
+   xhttp.send();
+ }
+</script>
+<script>
+ function requestProof() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+       document.getElementById("demo").innerHTML =
+       this.responseText;
+     }
+   };
+   xhttp.open("GET", "/request_proof", true);
+   xhttp.send();
+ }
+</script>
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+<!-- <script type="text/javascript", src="{{ url_for('static', filename='javascript/like_button.js') }}"></script> -->
+<script src= "{{ url_for('static', filename='javascript/like_button.js') }}"></script>
+
+</body>

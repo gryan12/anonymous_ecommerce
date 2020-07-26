@@ -1,0 +1,169 @@
+
+Anoncreds transaction protocol
+Plaintext:
+
+(Bank agent(s) write cred schema + def for payment confirmation to the ledger)
+(User choses to buy product. Completes anonymous payment for required amount)
+--> Bank issues proof of paymen to the user
+--> User initiates connection with Vendor through their public did (
+--> User proves that they are responsible for a given transaction id
+    --var 1---
+(The vendor packages users goods, labelling it with a unique package number)
+(The vendor posts the package to the shipping service)
+--> The vendor issues a credential to the user confirming their package number, alogn with the DID of the shipping service (may not be necessary)
+--> The user initiates a connection with the shipper through their endpoint speicifed in their diddoc
+--> the shipper requests proof-of-package ownership (snd self-attested address -- mb in the proof or not?)
+--> The user proves they own the credential for a package, and provides their address
+(The shipping service posts the package to the specified address)
+
+--ver 2--
+
+---> The vendor issues a credential to the user confirming their package numebr ((and RoP)))
+(vendor ships the package)
+---> The shipping service receives the package, issues a credential to the vendor confirming possefssion of package
+---> the vendor presents proof to the user that the shipping service is in possession of package
+---> The user initaitses connection with shipping servcie
+---> The shipping service requests proof of package ownership. user obliges
+---> ...and provices addresss
+(the shipping sercice posts package to speicifed address)
+
+
+
+//schema attrs
+
+//payemnt, placeholder. made by bank
+{
+	"name": "transaction_id",
+	"name": "recipient", 
+	"name": "amount",
+}
+
+
+
+//order number
+{
+	"name": "order_no",
+	"name": "product_id", 
+	"name": "package_no",
+	"name": "payment_received", 
+	"name": "date",
+	"name": "status",
+	"name": "shipper_did",
+}
+
+
+//
+package received
+{
+	"name": "shipping_service_name", 
+	"name": "did", 
+	"name": "package_no", 
+	"name": "date_received", 
+	"name": "vendor_of_origin",
+}
+
+
+//proof 1: proof of payment. Purpose: prove that user was responsible for a given transaction
+{
+	{
+		"name": "transcation_id",
+		"restrictions": [{"issuer_did": payment_service_did}], //basically, require a transaction id credential from the given payment service
+	}
+
+	//proof that the amount sent == the price of the required item. likely not needed as a credential 
+	{
+		"name": "amount", 	
+		"p_type": "==", 
+		"p_value": price_lookup(c_prod_id)
+		"restrictions": [{"issuer_did": payment_service_did}], //basically, require a transaction id credential from the given payment service
+	}
+}
+
+
+//proof 2: Proof of package ownership. Purpose: prove that user owns a given package
+
+{
+	{
+		"name": "status", 	
+		"p_type": "==", 
+		"p_value": "received", 
+		"restrictions": [{"issuer_did": shipping_service_did}]
+	},
+
+	{
+		"name": "shipping_service_name", 	//self-attested
+	},
+
+}
+
+//proof 3: proof of package ownership. Purose: user to prove that they own a given package
+{
+	{
+		"name": "package_id",
+		"p_type": "==", 
+		"p_value": packages[c_id] 
+		"restrictions": [{"issuer_did": vendor_public_did}] //? maybe. not quite yet certain.
+	}
+}
+
+CREDENDIALS:
+#1: payment credential. placeholder, just
+{
+    {
+
+    },
+
+    {
+
+    }.
+}
+
+#2: package credential
+{
+    {
+
+    },
+
+    {
+
+    }.
+}
+
+#3 shipping-possession-cred
+{
+    {
+
+    },
+
+    {
+
+    }.
+}
+
+
+
+
+####PROOFS:
+the restrictions hsould be a creddef id (make known through the aplpication code) rather than a did, as the latter
+can get muddied a bit i think with other stuff idk
+
+
+//protocol 
+
+1. Purchaser, through the application, orders an item. This reserves an/the item from the sellers stock. The user, through some given endpoint provided by the seller, 
+initiates anonymous ZKP-faciitated (3rd party) payment to the seller for the amount of the item. 
+
+2. The payment service offers a credential to the buyer stating the amount they paid, and the/an identifier for the transcaction (that the vendor can verify). 
+
+3. the user proves to the vendor that they sent them the required amount of money, by proving with their credentials that they were the source of the anonymous payment. 
+
+4. the vendor issues a credential to the user that payment has been received, the order number, and their package number. the seller then ships the package to the shipping service. 
+
+5. the shipping service issues the vendor a credential that they have received a package of a given package/order number. importantly, this is with anonymous pairwise dids such that the shipper does not have any way of identifying who the vendor is/was. 
+
+6. the vendor proves to the user that the shipping service has received their package. 
+
+7. the user (initiates comms via public did) with shipping service, proving ownership of the package number, and providing the desired shipping addresss. 
+
+8. the shipping service labels the package and ships it to the desired location. 
+

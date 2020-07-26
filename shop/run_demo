@@ -1,0 +1,79 @@
+#!/bin/bash
+
+shopt -s nocasematch
+
+cd $(dirname $0)
+
+AGENT="$1"
+shift
+ARGS=""
+
+if [ -z "$DOCKER_NET" ]; then
+  DOCKER_NET="bridge"
+fi
+
+ARGS="${ARGS:+$ARGS }$i"
+
+if [ "$AGENT" = "alice" ]; then
+  AGENT_MODULE="alice"
+  AGENT_PORT=8030
+  AGENT_PORT_RANGE=8030-8037
+elif [ "$AGENT" = flaskbank"" ]; then
+  AGENT_MODULE="flaskbank"
+  AGENT_PORT=5040
+  AGENT_PORT_RANGE=5040-5047
+elif [ "$AGENT" = "flaskvendor" ]; then
+  AGENT_MODULE="flaskvendor"
+  AGENT_PORT=7040
+  AGENT_PORT_RANGE=7040-7048
+elif [ "$AGENT" = "flaskshipper" ]; then
+  AGENT_MODULE="flaskshipper"
+  AGENT_PORT=7050
+  AGENT_PORT_RANGE=7050-7058
+elif [ "$AGENT" = "flaskuser" ]; then
+  AGENT_MODULE="flaskuser"
+  AGENT_PORT=9050
+  AGENT_PORT_RANGE=9050-9058
+else
+  exit 1
+fi
+
+echo "Preparing agent image..."
+docker build -q -t transaction-demo -f ../docker/Dockerfile.shop .. || exit 1
+
+if [ ! -z "$DOCKERHOST" ]; then
+  # provided via APPLICATION_URL environment variable
+  export RUNMODE="docker"
+elif [ -z "${PWD_HOST_FQDN}" ]; then
+  DOCKERHOST=`docker run --rm --net=host eclipse/che-ip`
+  export RUNMODE="docker"
+fi
+
+echo "Host is: {$DOCKERHOST}"
+
+DOCKER_ENV="-e LOG_LEVEL=${LOG_LEVEL} -e RUNMODE=${RUNMODE} -e DOCKERHOST=${DOCKERHOST}"
+if ! [ -z "$AGENT_PORT" ]; then
+  DOCKER_ENV="${DOCKER_ENV} -e AGENT_PORT=${AGENT_PORT}"
+  DOCKER_ENV="${DOCKER_ENV} -e ROLE=${AGENT_MODULE}"
+fi
+if ! [ -z "$LEDGER_URL" ]; then
+  GENESIS_URL="${LEDGER_URL}/genesis"
+  DOCKER_ENV="${DOCKER_ENV} -e LEDGER_URL=${LEDGER_URL}"
+fi
+if ! [ -z "$GENESIS_URL" ]; then
+  DOCKER_ENV="${DOCKER_ENV} -e GENESIS_URL=${GENESIS_URL}"
+fi
+if ! [ -z "$AGENT_ENDPOINT" ]; then
+  DOCKER_ENV="${DOCKER_ENV} -e AGENT_ENDPOINT=${AGENT_ENDPOINT}"
+fi
+
+DOCKER=${DOCKER:-docker}
+
+echo "Starting $AGENT..."
+
+$DOCKER run --name $AGENT --rm -it ${DOCKER_OPTS} \
+  --network=${DOCKER_NET} \
+  -p 0.0.0.0:$AGENT_PORT_RANGE:$AGENT_PORT_RANGE \
+  -v "/$(pwd)/../logs:/home/indy/logs" \
+  $DOCKER_ENV \
+  transaction-demo $AGENT_MODULE --port $AGENT_PORT $ARGS

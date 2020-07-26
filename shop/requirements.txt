@@ -1,0 +1,10 @@
+asyncpg~=0.18.0
+prompt_toolkit~=2.0.9
+git+https://github.com/webpy/webpy.git#egg=web.py
+qrcode[pil]~=6.1
+click==7.1.2
+Flask==1.1.2
+itsdangerous==1.1.0
+Jinja2==2.11.2
+MarkupSafe==1.1.1
+Werkzeug==1.0.1
