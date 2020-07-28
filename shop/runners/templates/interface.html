@@ -107,7 +107,7 @@
    xhttp.onreadystatechange = function() {
      if (this.readyState == 4 && this.status == 200) {
        document.getElementById("demo").innerHTML =
-       "<h3> Invite Details" + this.responseText + "</h3>;
+       "<h3> Invite Details" + this.responseText + "</h3>";
      }
    };
    xhttp.open("GET", "/create_invite", true);

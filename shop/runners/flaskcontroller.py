@@ -149,7 +149,6 @@ def get_cred_ex_history():
         200
     )
 
-
 @app.route("/status/", methods=["GET"])
 def get_status():
     status = ob.get_status()
@@ -294,27 +293,26 @@ def issue_cred():
     logging.debug("With my role: %s", role)
 
     if state == "request_received" and role == "issuer":
-
         cred_preview = agent_data.previews[creddef_id]
-
         if agent_data.agent_role == "flaskvendor":
-
             cred = {
                 "comment": "issuance of payment credential",
                 "credential_preview": cred_preview
             }
-
         elif agent_data.agent_role == "flaskbank":
-
             cred = {
                 "comment": "issuance of package credential",
                 "credential_preview": cred_preview
             }
-    elif state == "request_received" and role == "holder":
-
-
         resp = ob.issue_credential(credex_id, cred)
         print(f"issue cred webhook, conn id {conn_id}")
+
+    elif role == "holder":
+        if state =="offer_received":
+            ob.send_cred_request(credex_id)
+
+        elif state =="credential_acked":
+            logging.debug("Credential stored")
 
     return make_response(json.dumps({"code": "success"}), 200)
 
