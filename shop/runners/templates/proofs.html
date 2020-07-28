@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">
+                    {{ name }}
+                </a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="/home">Home</a></li>
+                <li><a href="connections">Connections</a></li>
+                <li><a href="credentials">Credentials</a></li>
+                <li class="active"><a href="proofs">Proofs</a></li>
+            </ul>
+        </div>
+    </nav>
+
+  <div class="jumbotron text-center">
+    {% if name %}
+    <h1> {{ name }}: Proofs </h1>
+    {% else %}
+    <h1> Sorry, no agent detected </h1>
+    {% endif %}
+  </div>
+  <div class="container">
+      <div class="col-sm-4">
+          <h3><u>Actions</u></h3>
+          <button class="btn btn-primary" id="issue_proof" onclick="requestProof()">
+              {% if name == "flaskvendor" %}
+              Request Proof of Payment
+              {% elif name =="flaskshipper" %}
+              Request Proof of Package Ownership
+              {% elif name =="flaskuser" %}
+              Request Proof of Package Status
+              {% endif %}
+          </button>
+      </div>
+      <div class="col-sm-4">
+        <h3><u>Proof Exchange History</u></h3>
+        <p id ="proof_ex_hist"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function(){
+    $.ajax({ url: "/home/proofs/history",
+        context: document.body,
+        success: function(response){
+           $('#proof_ex_hist').text(response);
+        }});
+    });
+  </script>
+    <script>
+ function requestProof() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+        location.reload(true)
+     }
+   };
+   xhttp.open("GET", "/proofs/request", true);
+   xhttp.send();
+ }
+</script>
+</body>
+</html>
+

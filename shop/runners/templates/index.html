@@ -1,78 +1,163 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="generator" content="Jekyll v4.0.1">
-    <title>Offcanvas template · Bootstrap</title>
+<!-- jQuery library -->
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">WebSiteName</a>
+        </div>
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#">Home</a></li>
+          <li><a href="connections">Connections</a></li>
+          <li><a href="credentials">Credentials</a></li>
+          <li><a href="proofs">Proofs</a></li>
+        </ul>
+      </div>
+    </nav>
 
 
-  <link href="../assets/dist/css/bootstrap.css" rel="stylesheet">
-
-    <style>
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
-
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
-        }
-      }
-    </style>
-    <!-- Custom styles for this template -->
-    <link href="offcanvas.css" rel="stylesheet">
-  </head>
-  <body class="bg-light">
-    <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
-  <a class="navbar-brand mr-auto mr-lg-0" href="#">Offcanvas navbar</a>
-  <button class="navbar-toggler p-0 border-0" type="button" data-toggle="offcanvas">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
-<main role="main" class="container">
-  <div class="d-flex align-items-center p-3 my-3 text-white-50 bg-purple rounded shadow-sm">
-    <img class="mr-3" src="../assets/brand/bootstrap-outline.svg" alt="" width="48" height="48">
-    <div class="lh-100">
-      <h6 class="mb-0 text-white lh-100">Bootstrap</h6>
-      <small>Since 2011</small>
+    <title> Welcome to the demo controller interface! </title>
+    {% if name %}
+    <h1> {{ name }} controller is up! </h1>
+    {% else %}
+    <h1> Sorry, no controller is active! </h1>
+    {% endif %}
+    <div id ="like_button.js">
     </div>
-  </div>
 
-  <div class="my-3 p-3 bg-white rounded shadow-sm">
-    <h6 class="border-bottom border-gray pb-2 mb-0">Recent updates</h6>
-    <div class="media text-muted pt-3">
-      <svg class="bd-placeholder-img mr-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 32x32"><title>Placeholder</title><rect width="100%" height="100%" fill="#007bff"/><text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text></svg>
-      <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-      </p>
+    <div id="Anoncreds Actions">
+        <h3>
+            Anoncreds actions
+        </h3>
+        <Button id = "issue_cred" onclick="issueCredential()" value ="credbutton">Issue Credential</Button>
+        <Button id = "req_proof" onclick="requestProof()" value="proofbutton">Request Proof</Button>
     </div>
-    <div class="media text-muted pt-3">
-      <svg class="bd-placeholder-img mr-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 32x32"><title>Placeholder</title><rect width="100%" height="100%" fill="#e83e8c"/><text x="50%" y="50%" fill="#e83e8c" dy=".3em">32x32</text></svg>
-      <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-      </p>
+    <div id="connection_stuff">
+        <h3>
+            Connection-related actions
+        </h3>
+        <Button id = "inv_but" onclick="createInvite()" value="proofbutton">Create Invite</Button>
+        <Button id = "get_conns" onclick="getConnections()" value="connButton">Check Connection History</Button>
+        <Button id = "get_active_conns" onclick="getActiveConnections()" value="activeConnButton">Check active connections</Button>
+        <Button id = "status" onclick="getStatus()" value="statusButton">Get Server Status</Button>
     </div>
-    <div class="media text-muted pt-3">
-      <svg class="bd-placeholder-img mr-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 32x32"><title>Placeholder</title><rect width="100%" height="100%" fill="#6f42c1"/><text x="50%" y="50%" fill="#6f42c1" dy=".3em">32x32</text></svg>
-      <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-      </p>
-    </div>
-    <small class="d-block text-right mt-3">
-      <a href="#">server updates</a>
-    </small>
-  </div>
 
-  <div class="my-3 p-3 bg-white rounded shadow-sm">
-    <h6 class="border-bottom border-gray pb-2 mb-0">Suggestions</h6>
-  </div>
+    <div id = "inputstuff">
+        <h3>
+            Paste invitation JSON:
+        </h3>
+        <form action="/receive_invite" id="invForm" name=inviteForm method="post" enctype="multipart/form-data">
+            <textarea id="recInv" rows="20", cols="60" name="invite"></textarea>
+            <input type="submit" value="submit"/>
+        </form>
+        <h3>
+            Manual input option for the public DIDs of the other demo agents
+        </h3>
+        <form action="/set_dids" name=didForm method="post">
+            Bank Did <textarea id="bank_did_box" name="bank_did"></textarea>
+            Shipper Did<textarea id="shipper_did_box" name="shipper_did"></textarea>
+            Vendor Did<textarea id="vendor_did_box" name="vendor_did"></textarea>
+            <input type="submit" value="submit"/>
+        </form>
+        <form action="/send_message" name=msgForm method="post" onsubmit="return false;">
+            Send Message: <textarea id="msgArea" name="message"></textarea>
+            <input type="submit" value="submit"/>
+        </form>
 
-</main>
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-      <script>window.jQuery || document.write('<script src="../assets/js/vendor/jquery.slim.min.js"><\/script>')</script><script src="../assets/dist/js/bootstrap.bundle.js"></script>
-        <script src="offcanvas.js"></script></body>
-</html>
+
+
+    <div id = "demo">
+    </div>
+
+    <div id = "sourceTest">
+    </div>
+    <script>
+     function getStatus() {
+       var xhttp = new XMLHttpRequest();
+       xhttp.onreadystatechange = function() {
+         if (this.readyState == 4 && this.status == 200) {
+           document.getElementById("demo").innerHTML =
+           this.responseText;
+         }
+       };
+       xhttp.open("GET", "/status", true);
+       xhttp.send();
+     }
+    </script>
+
+    <script>
+     function createInvite() {
+       var xhttp = new XMLHttpRequest();
+       xhttp.onreadystatechange = function() {
+         if (this.readyState == 4 && this.status == 200) {
+           document.getElementById("demo").innerHTML =
+           this.responseText;
+         }
+       };
+       xhttp.open("GET", "/create_invite", true);
+       xhttp.send();
+     }
+    </script>
+
+    <script>
+     function getConnections() {
+       var xhttp = new XMLHttpRequest();
+       xhttp.onreadystatechange = function() {
+         if (this.readyState == 4 && this.status == 200) {
+           document.getElementById("demo").innerHTML =
+           this.responseText;
+         }
+       };
+       xhttp.open("GET", "/get_connections", true);
+       xhttp.send();
+     }
+    </script>
+
+    <script>
+     function getActiveConnections() {
+       var xhttp = new XMLHttpRequest();
+       xhttp.onreadystatechange = function() {
+         if (this.readyState == 4 && this.status == 200) {
+           document.getElementById("demo").innerHTML =
+           this.responseText;
+         }
+       };
+       xhttp.open("GET", "/get_active_connections", true);
+       xhttp.send();
+     }
+    </script>
+    <script>
+     function issueCredential() {
+       var xhttp = new XMLHttpRequest();
+       xhttp.onreadystatechange = function() {
+         if (this.readyState == 4 && this.status == 200) {
+           document.getElementById("demo").innerHTML =
+           this.responseText;
+         }
+       };
+       xhttp.open("GET", "/issue_cred", true);
+       xhttp.send();
+     }
+    </script>
+    <script>
+     function requestProof() {
+       var xhttp = new XMLHttpRequest();
+       xhttp.onreadystatechange = function() {
+         if (this.readyState == 4 && this.status == 200) {
+           document.getElementById("demo").innerHTML =
+           this.responseText;
+         }
+       };
+       xhttp.open("GET", "/request_proof", true);
+       xhttp.send();
+     }
+    </script>
+
+</body>

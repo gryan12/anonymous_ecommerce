@@ -28,6 +28,15 @@ Plaintext:
 (the shipping sercice posts package to speicifed address)
 
 
+// application code
+
+    --attach a public did to market listing(s)
+    --define a (anonymous) payment service/endpoint and corresponding DID for a market listing
+    --(potentially) define the shipping service DID and associate with market listing.
+        -alternatively application code can provide list of shipping dids and vendors can inform (perhaps via crednetial)
+        -which one they are using.
+
+
 End result *should* (i.e. i think) be that there is no externally correlatable user behavior
 
 

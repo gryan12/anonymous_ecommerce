@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">
+                    {{ name }}
+                </a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="/home">Home</a></li>
+                <li class="active"><a href="connections">Connections</a></li>
+                <li><a href="credentials">Credentials</a></li>
+                <li><a href="proofs">Proofs</a></li>
+            </ul>
+        </div>
+    </nav>
+  <div class="jumbotron text-center">
+    {% if name %}
+    <h1> {{ name }}: Connections </h1>
+    {% else %}
+    <h1> Sorry, no agent detected </h1>
+    {% endif %}
+  </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-4">
+        <h3><u>Active Connecitons</u></h3>
+         <!-- todo select active connection -->
+        <p id="active_connections"></p>
+        <p id="active_connections_text"></p>
+      </div>
+      <div class="col-sm-4">
+        <h3><u>Full Connection History</u></h3>
+        <p id ="conn_history"></p>
+        <p id ="clean_conn_history"></p>
+      </div>
+    </div>
+  </div>
+  <script>
+    $(document).ready(function(){
+    $.ajax({ url: "/get_connections",
+        context: document.body,
+        success: function(response){
+           $('#conn_history').text(response);
+           var jsonOBJ = response.responseJSON
+           var results = jsonOBJ.results
+           var first = results[0]
+           $('#conn_history').append("Connection ID: " + first.connection_id);
+        }});
+    });
+  </script>
+  <script>
+    $(document).ready(function(){
+    $.ajax({ url: "/get_active_connections",
+        context: document.body,
+        success: function(response){
+           $('#active_connections').text(response);
+           var jsontext = response.responseText
+           $('#active_connections_text').text(jsontext);
+        }});
+    });
+  </script>
+</body>
+</html>
+

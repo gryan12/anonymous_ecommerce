@@ -61,6 +61,95 @@ def render_interface():
     name = os.getenv("ROLE")
     return render_template("interface.html", name=name)
 
+
+@app.route("/home/connections", methods=["GET"])
+def render_connections():
+    name = os.getenv("ROLE")
+    return render_template("connections.html", name=name)
+
+
+@app.route("/home/connections", methods=["POST"])
+def set_active_connection():
+    # expecting {"conn_id":conn_id"}
+    global agent_data
+    data = json.loads(request.data)
+    agent_data.current_connection = data["conn_id"]
+    return make_response(
+        json.dumps({"result": "Current connection successfully updated"}),
+        200
+    )
+
+
+@app.route("/home/proofs", methods=["GET"])
+def render_proofs():
+    name = os.getenv("ROLE")
+    return render_template("proofs.html", name=name)
+
+@app.route("/home/proofs/history", methods=["GET"])
+def get_proof_history():
+    return make_response(
+        json.dumps(ob.get_pres_ex_records()),
+        200
+    )
+
+@app.route("/request_proof/", methods=["GET"])
+def req_proof():
+    if not hasActiveConnection():
+        return make_response({"code":"failure", "reason":"no active connections"})
+
+    logging.debug("Has active connection :)")
+    role=os.getenv("ROLE")
+    if role == "flaskvendor":
+        request_proof_of_payment()
+
+    elif role == "flaskshipper":
+        request_proof_of_ownership()
+
+    return make_response({"code":"success"})
+
+@app.route("/proofs/request", methods=["GET"])
+def issue_proof_req():
+    if not hasActiveConnection():
+        return make_response({"code":"failure", "reason":"no active connections"})
+
+    logging.debug("Has active connection :)")
+    role=os.getenv("ROLE")
+    if role == "flaskvendor":
+        request_proof_of_payment()
+
+    elif role == "flaskshipper":
+        request_proof_of_ownership()
+
+    return make_response({"code":"success"})
+
+@app.route("/home/credentials", methods=["GET"])
+def render_credentials():
+    name = os.getenv("ROLE")
+
+    bank_did = agent_data.bank_did
+    vendor_did = agent_data.vendor_did
+    shipper_did = agent_data.shipper_did
+
+    this_did_res = ob.get_public_did()
+
+    #todo check if
+    if name == "flaskvendor":
+        vendor_did = this_did_res['result']['did']
+    elif name == "flaskshipper":
+        shipper_did = this_did_res['result']['did']
+    elif name == "flaskbank":
+        bank_did = this_did_res['result']['did']
+
+    return render_template("credentials.html", name=name, vendor_did=vendor_did, bank_did=bank_did, ship_did=shipper_did)
+
+@app.route("/credentials/history", methods=["GET"])
+def get_cred_ex_history():
+    return make_response(
+        json.dumps(ob.get_cred_ex_records()),
+        200
+    )
+
+
 @app.route("/status/", methods=["GET"])
 def get_status():
     status = ob.get_status()
@@ -77,8 +166,10 @@ def set_dids():
     global agent_data
     did_dict = request.form.to_dict()
     print(did_dict)
+
     if "shipper_did" in did_dict.keys():
         agent_data.shipper_did = did_dict["shipper_did"]
+
     if "bank_did" in did_dict.keys():
         print("bank_did_pres")
         agent_data.bank_did = did_dict["bank_did"]
@@ -107,6 +198,7 @@ def get_active_conns():
     agents = [
         (x['their_label'], x['connection_id']) for x in cons['results'] if x['state'] == "active"
     ]
+
     if not agents:
         return make_response(json.dumps({"result": "no active connections"}), 200)
 
@@ -148,25 +240,10 @@ def issue_credreq():
     return make_response({"code":"success", "role": role}, 200)
 
 
-@app.route("/request_proof/", methods=["GET"])
-def req_proof():
-    if not hasActiveConnection():
-        return make_response({"code":"failure", "reason":"no active connections"})
-
-    logging.debug("Has active connection :)")
-    role=os.getenv("ROLE")
-    if role == "flaskvendor":
-        request_proof_of_payment()
-
-    elif role == "flaskshipper":
-        request_proof_of_ownership()
-
-    return make_response({"code":"success"})
 
 #### END interface routes
-##ib routes
-# handles connections.
-#
+
+#### START Aries inbound coms
 @app.route("/webhooks/topic/connections/", methods=["POST"])
 def connections():
     global agent_data
@@ -200,7 +277,11 @@ def issue_cred():
     state = data["state"]
     initiator = data["initiator"]
     credex_id = data["credential_exchange_id"]
-    
+
+    conn_id = data["connection_id"]
+    creddef_id = data["credential_definition_id"]
+    credex_id = data["credential_exchange_id"]
+
     credex_details = ob.get_cred_ex_record(credex_id)
 
     role = None
@@ -213,10 +294,7 @@ def issue_cred():
     logging.debug("With my role: %s", role)
 
     if state == "request_received" and role == "issuer":
-        conn_id = data["connection_id"]
-        logging.debug("issueing credential to user agent")
-        creddef_id = data["credential_definition_id"]
-        credex_id = data["credential_exchange_id"]
+
         cred_preview = agent_data.previews[creddef_id]
 
         if agent_data.agent_role == "flaskvendor":
@@ -232,6 +310,8 @@ def issue_cred():
                 "comment": "issuance of package credential",
                 "credential_preview": cred_preview
             }
+    elif state == "request_received" and role == "holder":
+
 
         resp = ob.issue_credential(credex_id, cred)
         print(f"issue cred webhook, conn id {conn_id}")
@@ -264,6 +344,13 @@ def present_proof():
 def catch(topicname):
     print("got unhandled request of topic: ", topicname)
     return make_response(json.dumps({"code":"not yet done"}), 501)
+
+def is_verified(presex_id):
+    resp = ob.get_pres_ex_details(presex_id)
+    if resp['state'] != "verified":
+        return False
+    else:
+        return resp['verified']
 
 def get_genesis_text(ledger_url):
     try:

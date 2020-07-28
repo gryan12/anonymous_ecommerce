@@ -72,6 +72,10 @@ def get_cred_ex_record(credex_id):
     req_url = AGENT_URL + f"/issue-credential/records/{credex_id}"
     return get(req_url)
 
+def get_cred_ex_records():
+    req_url = AGENT_URL + f"/issue-credential/records"
+    return get(req_url)
+
 ##proofs
 def send_proof_request(proof_req):
     req_url = AGENT_URL + "/present-proof/send-request"
@@ -91,6 +95,10 @@ def verify_presentation(id):
 
 def get_pres_ex_details(presex_id):
     req_url = AGENT_URL + f"/present-proof/records/{presex_id}"
+    return get(req_url)
+
+def get_pres_ex_records():
+    req_url = AGENT_URL + "/present-proof/records"
     return get(req_url)
 
 ##connections
@@ -131,4 +139,8 @@ def get_public_did():
 
 def get_status():
     req_url = AGENT_URL + "/status"
+    return get(req_url)
+
+def get_public_did():
+    req_url = AGENT_URL + "/wallet/did/public"
     return get(req_url)

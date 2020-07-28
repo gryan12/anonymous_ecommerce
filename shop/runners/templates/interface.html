@@ -1,57 +1,99 @@
 <!doctype html>
 
 <head>
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/mainpage.css') }}"/>
+    <!--link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/mainpage.css') }}"/-->
     <!--link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/mvp.css') }}"/-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
-
 <body>
-<title> Welcome to the demo controller interface! </title>
-{% if name %}
-<h1> {{ name }} controller is up! </h1>
-{% else %}
-<h1> Sorry, no controller is active! </h1>
-{% endif %}
-<div id ="like_button.js">
+
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+                {{ name }}
+            </a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="connections">Connections</a></li>
+            <li><a href="credentials">Credentials</a></li>
+            <li><a href="proofs">Proofs</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="jumbotron text-center">
+    {% if name %}
+    <h1> {{ name }}: Aries agent is up and running! </h1>
+    {% else %}
+    <h1> Sorry, no agent detected </h1>
+    {% endif %}
 </div>
 
-<div id = "inputstuff">
-    <Button id = "status" onclick="getStatus()" value="statusButton">Get Server Status</Button>
-    <Button id = "issue_cred" onclick="issueCredential()" value ="credbutton">Issue Credential</Button>
-    <Button id = "req_proof" onclick="requestProof()" value="proofbutton">Request Proof</Button>
-    <Button id = "inv_but" onclick="createInvite()" value="proofbutton">Create Invite</Button>
-    <Button id = "get_conns" onclick="getConnections()" value="connButton">Check Connection History</Button>
-    <Button id = "get_active_conns" onclick="getActiveConnections()" value="activeConnButton">Check active connections</Button>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <p class="font-weight-light">
+                Welcome to the demo. Connections between agents are currenty establised through pasting json invite details.
+                Getting the current anoncreds flow connections need to be established between:
+                the user and the bank, the user and the vendor, the shipping service and the user.
+                Checking state of current agent<-->agent connections can be done in connections tab,
+                credentials (and exchange history) can be seen in the exchange tab, and proof exchange hsitory and issuing
+                can be done in the proofs tab.
+                Credentials: atm the public dids of bank/vendor/shipping service need to be manually input in the labelled fields
+                in the credentials tab.
+                all text is left as json atm, will leave pretty printing till later.
 
-    <form action="/receive_invite" id="invForm" name=inviteForm method="post" enctype="multipart/form-data">
-        <textarea id="recInv" rows="20", cols="60" name="invite"></textarea>
-        <input type="submit" value="submit"/>
-    </form>
-    <form action="/set_dids" name=didForm method="post">
-        Bank Did <textarea id="bank_did_box" name="bank_did"></textarea>
-        Shipper Did<textarea id="shipper_did_box" name="shipper_did"></textarea>
-        Vendor Did<textarea id="vendor_did_box" name="vendor_did"></textarea>
-        <input type="submit" value="submit"/>
-    </form>
-    <form action="/send_message" name=msgForm method="post" onsubmit="return false;">
-        Send Message: <textarea id="msgArea" name="message"></textarea>
-        <input type="submit" value="submit"/>
-    </form>
+            <div id="Anoncreds Actions">
+                <h3>
+                    Anoncreds actions
+                </h3>
+                <Button id = "issue_cred" onclick="issueCredential()" value ="credbutton">Issue Credential</Button>
+                <Button id = "req_proof" onclick="requestProof()" value="proofbutton">Request Proof</Button>
+            </div>
+            <div id="connection_stuff">
+                <h3>
+                    Connection-related actions
+                </h3>
+                <Button id = "inv_but" onclick="createInvite()" value="proofbutton">Create Invite</Button>
+                <Button id = "get_conns" onclick="getConnections()" value="connButton">Check Connection History</Button>
+                <Button id = "get_active_conns" onclick="getActiveConnections()" value="activeConnButton">Check active connections</Button>
+                <Button id = "status" onclick="getStatus()" value="statusButton">Get Server Status</Button>
+            </div>
+            <div id = "inputstuff">
+                <h3>
+                    Paste invitation JSON:
+                </h3>
+                <form action="/receive_invite" id="invForm" name=inviteForm method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="invite_area">Paste Invite JSON</label>
+                        <input class="form-control input-lg" id="invite_area" name="invite">
+                    </div>
+                    <button class="btn btn-default" type="submit" value="submit" target="hiddenFrame">Submit</button>
+                </form>
 
-
-
-<div id = "demo">
+                <div id = "demo">
+                </div>
+            </p>
+        </div>
+    </div>
 </div>
 
 <div id = "sourceTest">
 </div>
+<iframe name="hiddenFrame" width="0" height="0" border="0" style="display: none;"></iframe>
+
 <script>
  function getStatus() {
    var xhttp = new XMLHttpRequest();
    xhttp.onreadystatechange = function() {
      if (this.readyState == 4 && this.status == 200) {
        document.getElementById("demo").innerHTML =
-       this.responseText;
+       "<h3> Server Status JSON: " +  this.responseText + "</h3>";
+
      }
    };
    xhttp.open("GET", "/status", true);
@@ -65,7 +107,7 @@
    xhttp.onreadystatechange = function() {
      if (this.readyState == 4 && this.status == 200) {
        document.getElementById("demo").innerHTML =
-       this.responseText;
+       "<h3> Invite Details" + this.responseText + "</h3>;
      }
    };
    xhttp.open("GET", "/create_invite", true);
@@ -86,6 +128,7 @@
    xhttp.send();
  }
 </script>
+
 <script>
  function getActiveConnections() {
    var xhttp = new XMLHttpRequest();
@@ -96,19 +139,6 @@
      }
    };
    xhttp.open("GET", "/get_active_connections", true);
-   xhttp.send();
- }
-</script>
-<script>
- function issueCredential() {
-   var xhttp = new XMLHttpRequest();
-   xhttp.onreadystatechange = function() {
-     if (this.readyState == 4 && this.status == 200) {
-       document.getElementById("demo").innerHTML =
-       this.responseText;
-     }
-   };
-   xhttp.open("GET", "/issue_cred", true);
    xhttp.send();
  }
 </script>
@@ -128,7 +158,6 @@
 <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
 <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
-<!-- <script type="text/javascript", src="{{ url_for('static', filename='javascript/like_button.js') }}"></script> -->
-<script src= "{{ url_for('static', filename='javascript/like_button.js') }}"></script>
-
+</div>
 </body>
+</html>
