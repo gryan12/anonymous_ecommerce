@@ -3,7 +3,14 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from runners.support.utils import flatten
+
+def flatten(args):
+    for arg in args:
+        if isinstance(arg, (list, tuple)):
+            yield from flatten(arg)
+        else:
+            yield arg
+
 
 def start_aries(start_port, seed, label, genesis_url=None):
     ledger_url = os.getenv("LEDGER_URL")
