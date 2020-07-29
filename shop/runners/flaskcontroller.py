@@ -149,6 +149,13 @@ def get_cred_ex_history():
         200
     )
 
+@app.route("/credentials", methods=["GET"])
+def get_creds():
+    return make_response(
+        json.dumps(ob.get_credentials()),
+        200
+    )
+
 @app.route("/status/", methods=["GET"])
 def get_status():
     status = ob.get_status()
@@ -203,7 +210,6 @@ def get_active_conns():
 
     return make_response(json.dumps({x[0]: x[1] for x in agents}), 200)
 
-    return make_response(json.dumps(ob.get_connections()))
 
 
 @app.route("/send_message/", methods=["POST"])
@@ -283,16 +289,16 @@ def issue_cred():
 
     credex_details = ob.get_cred_ex_record(credex_id)
 
-    role = None
-    if "role" in credex_details:
-        role = credex_details["role"]
-    elif initiator == "self":
-        role = "issuer"
+   # role = None
+   # if "role" in credex_details:
+   #     role = credex_details["role"]
+   # elif initiator == "self":
+   #     role = "issuer"
 
-    logging.debug("...with state: %s, intitiator: %s, and id: %s", state, initiator, id)
-    logging.debug("With my role: %s", role)
+    logging.debug("...with state: %s, intitiator: %s, and id: %s", state, initiator, credex_id)
+    #logging.debug("With my role: %s", role)
 
-    if state == "request_received" and role == "issuer":
+    if state == "request_received":
         cred_preview = agent_data.previews[creddef_id]
         if agent_data.agent_role == "flaskvendor":
             cred = {
@@ -307,21 +313,22 @@ def issue_cred():
         resp = ob.issue_credential(credex_id, cred)
         print(f"issue cred webhook, conn id {conn_id}")
 
-    elif role == "holder":
-        if state =="offer_received":
-            ob.send_cred_request(credex_id)
+    elif state == "offer_received":
+        ob.send_cred_request(credex_id)
 
-        elif state =="credential_acked":
-            logging.debug("Credential stored")
+    elif state == "credential_acked":
+        logging.debug("Credential stored")
 
     return make_response(json.dumps({"code": "success"}), 200)
 
+#todo move proof and cred handing logic to their own funcs/objs
 @app.route("/webhooks/topic/present_proof/", methods=["POST"])
 def present_proof():
     data = json.loads(request.data)
     presex_id = data["presentation_exchange_id"]
     state = data["state"]
     logging.debug(f"message recieved thoruhg prsent proof, with creedx_id: {presex_id} and state: {state}")
+
 
     #todo: account for role
 
@@ -336,6 +343,50 @@ def present_proof():
         #    logging.debug("MAJOR STAGE 4: ISSUEING PACKAGE CRED")
         #    send_package_cred_offer(agent_data.current_connection, agent_data.creddef_id)
 
+    if data["role"] == "prover":
+        logging.debug("present proof webhook as prover")
+        pres_req = data["presentation_request"]
+
+        if state == "request_received":
+            ref_creds = None
+            req_creds = ob.get_req_creds(presex_id)
+
+        #todo move logic to builder object this is horrific
+
+        if req_creds:
+            for row in sorted(
+                req_creds,
+                key=lambda c: int(c["cred_info"]["attrs"]["timestamp"]),
+                reverse=True,
+            ):
+                for ref in row["presentation_referents"]:
+                    if ref not in ref_creds:
+                        ref_creds[ref] = row
+
+            revealed = {}
+            for req_attr in pres_req["requested_attributes"]:
+                if req_attr in ref_creds:
+                    revealed[req_attr] = {
+                        "cred_id": ref_creds[req_attr]["cred_info"]["referent"], "revealed": True,
+                    }
+                else:
+                    logging.debug("No credential found in wallet for requested attribute")
+
+            preds = {}
+            for req_pred in pres_req["requested_predicates"]:
+                if req_pred in ref_creds:
+                    preds[req_pred] = {
+                        "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
+                    }
+
+            proof_pres = {
+                "requested_predicates": preds,
+                "requested_attributes": revealed,
+                "self_attested_attributes": {},
+            }
+
+            ob.send_presentation(proof_pres, presex_id)
+
     return make_response(json.dumps({"code":"success"}), 200)
 
 @app.route("/webhooks/topic/<topicname>/", methods=["POST", "GET"])
@@ -343,6 +394,14 @@ def catch(topicname):
     print("got unhandled request of topic: ", topicname)
     return make_response(json.dumps({"code":"not yet done"}), 501)
 
+
+@app.route("/webhooks/topic/problem_report/", methods=["POST"])
+def handle_problem():
+    data = json.loads(request.data)
+    logging.debug("received erorr message : %s", data["content"])
+    return make_response(json.dumps({"code": "success"}), 200)
+
+### END webhooks:
 def is_verified(presex_id):
     resp = ob.get_pres_ex_details(presex_id)
     if resp['state'] != "verified":
@@ -510,7 +569,7 @@ def send_payment_cred_offer(conn_id, creddef_id):
 
     logging.debug("Issue credential to user")
     builder = build_cred(creddef_id)
-    builder.with_attribute({"transaction_id": "asdf1234"}) \
+    builder.with_attribute({"transaction_no": "asdf1234"}) \
         .with_attribute({"timestamp": str(int(time.time()))}) \
         .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
         .with_conn_id(conn_id)

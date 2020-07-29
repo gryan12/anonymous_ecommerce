@@ -57,12 +57,9 @@ def get_credential(cred_id):
     return get(req_url)
 
 def get_credentials():
-    req_url = AGENT_URL + "/credential"
+    req_url = AGENT_URL + "/credentials"
     return get(req_url)
 
-def get_credentials(id):
-    req_url = AGENT_URL + f"/present-proof/records/{id}/credentials"
-    return get(req_url)
 
 def remove_credential(id):
     req_url = AGENT_URL + f"/credential/{id}/remove"
@@ -100,6 +97,13 @@ def get_pres_ex_details(presex_id):
 def get_pres_ex_records():
     req_url = AGENT_URL + "/present-proof/records"
     return get(req_url)
+
+def get_pres_credentials(id):
+    req_url = AGENT_URL + f"/present-proof/records/{id}/credentials"
+    return get(req_url)
+
+def get_req_creds(presex_id):
+    req_url = AGENT_URL + f"/prsent-proof/records/{presex_id}/credentials"
 
 ##connections
 def create_invite():

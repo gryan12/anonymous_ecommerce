@@ -124,7 +124,6 @@ class AliceAgent(DemoAgent):
                 f"/present-proof/records/{presentation_exchange_id}/credentials"
             )
 
-            print("post credentials req:", credentials) ##think timestamp is fking with it
             if credentials:
                 for row in sorted(
                     credentials,

@@ -67,12 +67,12 @@
                 <h3>
                     Paste invitation JSON:
                 </h3>
-                <form action="/receive_invite" id="invForm" name=inviteForm method="post" enctype="multipart/form-data">
+                <form action="/receive_invite" id="invForm" target= "hiddenFrame" name=inviteForm method="post" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="invite_area">Paste Invite JSON</label>
                         <input class="form-control input-lg" id="invite_area" name="invite">
                     </div>
-                    <button class="btn btn-default" type="submit" value="submit" target="hiddenFrame">Submit</button>
+                    <button class="btn btn-default" type="submit" value="submit">Submit</button>
                 </form>
 
                 <div id = "demo">
@@ -107,7 +107,7 @@
    xhttp.onreadystatechange = function() {
      if (this.readyState == 4 && this.status == 200) {
        document.getElementById("demo").innerHTML =
-       "<h3> Invite Details" + this.responseText + "</h3>";
+       "<h3> Invite Details: <br>" + this.responseText + "</h3>";
      }
    };
    xhttp.open("GET", "/create_invite", true);
