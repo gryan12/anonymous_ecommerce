@@ -2,9 +2,8 @@ Demo implementation of a transaction using aca-py.
 
 Run demo code:
 
-    --> In current state needs to have an Indy ledger running on port 9000.
-        I currently run a BCV ledger locally which can be installed and run with docker here:
-            will take a look at moving to docker compose so all of this can be done automatically.
+    --> In current state needs to have an Indy ledger running on localhost port 9000.
+        I currently run an instance of BC Gov'v Von nNetwork ledger locally: github.com/bcgov/von-network
 
     --> start_shop_agent script can be run with four different agent names as follows:
             ./start_shop_agent flaskvendor
@@ -53,8 +52,20 @@ Implementing the other variation(s) atm but above is only flow that works so far
 
 
 
+File description: 
+	
+	-> [dir] support. helper funcs
+		--creds.py: for building indy/aries anoncreds json 
+		--outbound_routing.py: funcitons for making http requests to acapy instance 
+		--
 
+	-> flaskcontroller.py: the controller logic, for all roles
+		--flask is used to handle webhooks originating from the aca instance
+		--and to provide the web interface for interacting with the controllers. 
 
+	-> agent_proc.py: logic for initialising acapy instance
+
+	-> start_shop_agent.sh: script to initialise an agent
 
 
 
