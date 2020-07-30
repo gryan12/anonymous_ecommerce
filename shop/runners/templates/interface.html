@@ -47,13 +47,6 @@
                 in the credentials tab.
                 all text is left as json atm, will leave pretty printing till later.
 
-            <div id="Anoncreds Actions">
-                <h3>
-                    Anoncreds actions
-                </h3>
-                <Button id = "issue_cred" onclick="issueCredential()" value ="credbutton">Issue Credential</Button>
-                <Button id = "req_proof" onclick="requestProof()" value="proofbutton">Request Proof</Button>
-            </div>
             <div id="connection_stuff">
                 <h3>
                     Connection-related actions
@@ -67,7 +60,7 @@
                 <h3>
                     Paste invitation JSON:
                 </h3>
-                <form action="/receive_invite" id="invForm" target= "hiddenFrame" name=inviteForm method="post" enctype="multipart/form-data">
+                <form action="/receive_invite" id="invForm"  name=inviteForm method="post" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="invite_area">Paste Invite JSON</label>
                         <input class="form-control input-lg" id="invite_area" name="invite">

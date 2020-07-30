@@ -6,7 +6,7 @@ from threading import Thread
 import os
 import sys
 import time
-from flask import Flask, request, make_response, render_template
+from flask import Flask, request, make_response, render_template, redirect
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
@@ -174,16 +174,18 @@ def set_dids():
     print(did_dict)
 
     if "shipper_did" in did_dict.keys():
-        agent_data.shipper_did = did_dict["shipper_did"]
+        if did_dict["shipper_did"]:
+            agent_data.shipper_did = did_dict["shipper_did"]
 
     if "bank_did" in did_dict.keys():
-        print("bank_did_pres")
-        agent_data.bank_did = did_dict["bank_did"]
+        if did_dict["bank_did"]:
+            agent_data.bank_did = did_dict["bank_did"]
 
     if "vendor_did" in did_dict.keys():
-        agent_data.vendor_did = did_dict["vendor_did"]
+        if did_dict["vendor_did"]:
+            agent_data.vendor_did = did_dict["vendor_did"]
 
-    return make_response({"code":"success"}, 200)
+    return redirect(request.referrer)
 
 
 @app.route("/receive_invite/", methods=["POST"])
@@ -191,7 +193,7 @@ def rec_inv():
     invdict = request.form.to_dict()
     invite = invdict['invite']
     ob.receive_invite(invite)
-    return make_response("invitation", 200)
+    return redirect(request.referrer)
 
 
 @app.route("/get_connections/", methods=["GET"])

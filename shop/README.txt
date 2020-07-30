@@ -13,7 +13,7 @@ Run demo code:
             each should be run in a separate terminal window. The web interface and aca-py swagger API can then be
             accessed via localhost on the ports displayed in the terminal output, shown below for convenience:
 
-            bank:     interface: :7032/home    swagger API: :7031
+            bank:     interface: :5042/home    swagger API: :5041
             vendor:   interface: :7042/home    swagger API: :7041
             shipper:  interface: :7052/home    swagger API: :7051
             user:     interface: :9052/home    swagger API: :9051
