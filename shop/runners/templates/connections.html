@@ -32,40 +32,65 @@
   </div>
   <div class="container">
     <div class="row">
-      <div class="col-sm-4">
+      <div class="col-md-6">
         <h3><u>Active Connecitons</u></h3>
          <!-- todo select active connection -->
         <p id="active_connections"></p>
         <p id="active_connections_text"></p>
+         <!--form id="active_con_form">
+        <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Active Connection
+              <span class="caret"></span></button>
+              <ul class="dropdown-menu">
+                <li><a href="#">HTML</a></li>
+                <li><a href="#">CSS</a></li>
+                <li><a href="#">JavaScript</a></li>
+              </ul>
+        </div>
+      </form-->
       </div>
-      <div class="col-sm-4">
+      <div class="col-md-6">
         <h3><u>Full Connection History</u></h3>
         <p id ="conn_history"></p>
         <p id ="clean_conn_history"></p>
       </div>
     </div>
   </div>
-  <script>
+
+    <script>
     $(document).ready(function(){
     $.ajax({ url: "/get_connections",
         context: document.body,
+        dataType: 'json',
         success: function(response){
-           $('#conn_history').text(response);
-           var jsonOBJ = response.responseJSON
-           var results = jsonOBJ.results
-           var first = results[0]
-           $('#conn_history').append("Connection ID: " + first.connection_id);
+           var results = response["results"]
+           for (var i= 0; i < results.length; i++) {
+
+                   $('#conn_history').append("Connection ID: " + results[i].connection_id + "<br>");
+                   $('#conn_history').append("Updated at: " + results[i].updated_at + "<br>");
+                   $('#conn_history').append("Connection state: " + results[i].state + "<br>");
+                   if(results[i].hasOwnProperty('their_label')) {
+                       $('#conn_history').append("Their label: " + results[i].their_label + "<br>");
+                   }
+                   $('#conn_history').append("<br>");
+           }
         }});
     });
   </script>
-  <script>
+
+<script>
     $(document).ready(function(){
     $.ajax({ url: "/get_active_connections",
         context: document.body,
+        dataType: 'json',
         success: function(response){
-           $('#active_connections').text(response);
-           var jsontext = response.responseText
-           $('#active_connections_text').text(jsontext);
+           console.log("object: %0", response)
+            for (var key in response) {
+                if (response.hasOwnProperty(key)) {
+                    console.log(key + " -> " + response[key]);
+                    $('#active_connections_text').append(key + " : " + response[key] + "<br>");
+                }
+            }
         }});
     });
   </script>

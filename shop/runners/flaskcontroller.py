@@ -198,7 +198,9 @@ def rec_inv():
 
 @app.route("/get_connections/", methods=["GET"])
 def get_conns():
-    return make_response(json.dumps(ob.get_connections()))
+    r = make_response(json.dumps(ob.get_connections()))
+    r.mimetype ="application/json"
+    return r
 
 @app.route("/get_active_connections/", methods=["GET"])
 def get_active_conns():
@@ -210,7 +212,9 @@ def get_active_conns():
     if not agents:
         return make_response(json.dumps({"result": "no active connections"}), 200)
 
-    return make_response(json.dumps({x[0]: x[1] for x in agents}), 200)
+    r = make_response(json.dumps({x[0]: x[1] for x in agents}), 200)
+    r.mimetype = "application/json"
+    return r
 
 
 

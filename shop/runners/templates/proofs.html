@@ -51,15 +51,26 @@
     </div>
   </div>
 
-  <script>
+    <script>
     $(document).ready(function(){
     $.ajax({ url: "/home/proofs/history",
         context: document.body,
+        dataType:'json',
         success: function(response){
-           $('#proof_ex_hist').text(response);
+           console.log("object: %0", response)
+           console.log("object :%0", response["results"])
+           var results = response["results"]
+           for (var i= 0; i < results.length; i++) {
+               $('#proof_ex_hist').append("Updated at: " + results[i].updated_at + "<br>");
+               $('#proof_ex_hist').append("Connection ID: " + results[i].connection_id + "<br>");
+               $('#proof_ex_hist').append("Role: " + results[i].role + "<br>");
+               $('#proof_ex_hist').append("State: " + results[i].state + "<br>");
+           }
         }});
     });
   </script>
+
+
     <script>
  function requestProof() {
    var xhttp = new XMLHttpRequest();
