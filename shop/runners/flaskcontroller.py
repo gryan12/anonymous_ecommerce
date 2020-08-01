@@ -490,8 +490,6 @@ def request_proof_of_ownership():
     ).withAttribute(
         "timestamp",
         restrictions=[{"issuer_did":vendor_did}]
-    ).withAttribute(
-        "address"               ##not sure if her but whatever just a demo
     ).with_conn_id(agent_data.current_connection).build()
     return ob.send_proof_request(req)
 
