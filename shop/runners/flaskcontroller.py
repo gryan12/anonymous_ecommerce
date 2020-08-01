@@ -65,7 +65,8 @@ def render_interface():
 @app.route("/home/connections", methods=["GET"])
 def render_connections():
     name = os.getenv("ROLE")
-    return render_template("connections.html", name=name)
+    resp = ob.get_public_did
+    return render_template("connections.html", name=name, did=resp["did"])
 
 
 @app.route("/home/connections", methods=["POST"])
@@ -74,6 +75,7 @@ def set_active_connection():
     global agent_data
     data = json.loads(request.data)
     agent_data.current_connection = data["conn_id"]
+
     return make_response(
         json.dumps({"result": "Current connection successfully updated"}),
         200
@@ -352,46 +354,51 @@ def present_proof():
     if data["role"] == "prover":
         logging.debug("present proof webhook as prover")
         pres_req = data["presentation_request"]
+        print("pres req: ", pres_req)
 
         if state == "request_received":
-            ref_creds = None
+            ref_creds = {}
             req_creds = ob.get_req_creds(presex_id)
+            print("req creds: ", req_creds)
 
-        #todo move logic to builder object this is horrific
+            print(req_creds)
+            #todo move logic to builder object this is horrific
 
-        if req_creds:
-            for row in sorted(
-                req_creds,
-                key=lambda c: int(c["cred_info"]["attrs"]["timestamp"]),
-                reverse=True,
-            ):
-                for ref in row["presentation_referents"]:
-                    if ref not in ref_creds:
-                        ref_creds[ref] = row
+            if req_creds:
+                for row in sorted(
+                    req_creds,
+                    key=lambda c: int(c["cred_info"]["attrs"]["timestamp"]),
+                    reverse=True,
+                ):
+                    for ref in row["presentation_referents"]:
+                        if ref not in ref_creds:
+                            ref_creds[ref] = row
 
-            revealed = {}
-            for req_attr in pres_req["requested_attributes"]:
-                if req_attr in ref_creds:
-                    revealed[req_attr] = {
-                        "cred_id": ref_creds[req_attr]["cred_info"]["referent"], "revealed": True,
-                    }
-                else:
-                    logging.debug("No credential found in wallet for requested attribute")
+                revealed = {}
+                for req_attr in pres_req["requested_attributes"]:
+                    if req_attr in ref_creds:
+                        revealed[req_attr] = {
+                            "cred_id": ref_creds[req_attr]["cred_info"]["referent"], "revealed": True,
+                        }
+                    else:
+                        logging.debug("No credential found in wallet for requested attribute")
 
-            preds = {}
-            for req_pred in pres_req["requested_predicates"]:
-                if req_pred in ref_creds:
-                    preds[req_pred] = {
-                        "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
-                    }
+                preds = {}
+                for req_pred in pres_req["requested_predicates"]:
+                    if req_pred in ref_creds:
+                        preds[req_pred] = {
+                            "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
+                        }
 
-            proof_pres = {
-                "requested_predicates": preds,
-                "requested_attributes": revealed,
-                "self_attested_attributes": {},
-            }
+                proof_pres = {
+                    "requested_predicates": preds,
+                    "requested_attributes": revealed,
+                    "self_attested_attributes": {},
+                }
 
-            ob.send_presentation(proof_pres, presex_id)
+                print(proof_pres)
+
+                ob.send_presentation(proof_pres, presex_id)
 
     return make_response(json.dumps({"code":"success"}), 200)
 
@@ -500,16 +507,11 @@ def request_proof_of_payment():
 
     builder = build_proof_request(name="proof of payment", version="1.0")
     req = builder.withAttribute(
-        "transaction_id",
+        "transaction_no",
         restrictions=[{"issuer_did":bank_did}]
     ).withAttribute(
         "timestamp",
         restrictions=[{"issuer_did":bank_did}]
-    ).withPred(         #todo remove this, just an experimentation with the req preds
-        "amount",
-        [{"issuer_did":bank_did}],
-        ">=",
-        14
     ).with_conn_id(agent_data.current_connection).build()
     return ob.send_proof_request(req)
 
@@ -552,7 +554,6 @@ def send_package_cred_offer(conn_id, creddef_id):
     global agent_data
     logging.debug("Issue credential to user")
 
-    shipper_did = None
     if not agent_data.shipper_did:
         shipper_did = "placeholder"
     else:

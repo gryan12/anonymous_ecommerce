@@ -26,6 +26,9 @@
   <div class="jumbotron text-center">
     {% if name %}
     <h1> {{ name }}: Connections </h1>
+      {% if did %}
+      <h3> Has current registered public DID of: {did} </h3>
+      {% endif %}
     {% else %}
     <h1> Sorry, no agent detected </h1>
     {% endif %}

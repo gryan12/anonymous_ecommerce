@@ -41,6 +41,8 @@
               Request Proof of Package Ownership
               {% elif name =="flaskuser" %}
               Request Proof of Package Status
+              {% else  %}
+              None
               {% endif %}
           </button>
       </div>
@@ -65,6 +67,9 @@
                $('#proof_ex_hist').append("Connection ID: " + results[i].connection_id + "<br>");
                $('#proof_ex_hist').append("Role: " + results[i].role + "<br>");
                $('#proof_ex_hist').append("State: " + results[i].state + "<br>");
+               if (results[i].hasOwnProperty("verified")) {
+                   $('#proof_ex_hist').append("Verification Result: " + results[i].verified + "<br>");
+               }
            }
         }});
     });
