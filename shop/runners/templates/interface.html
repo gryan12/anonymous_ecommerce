@@ -42,29 +42,27 @@
                 the user and the bank, the user and the vendor, the shipping service and the user.
                 Checking state of current agent<-->agent connections can be done in connections tab,
                 credentials (and exchange history) can be seen in the exchange tab, and proof exchange hsitory and issuing
-                can be done in the proofs tab.
+                can be done in the proofs tab.<br>
                 Credentials: atm the public dids of bank/vendor/shipping service need to be manually input in the labelled fields
-                in the credentials tab.
-                all text is left as json atm, will leave pretty printing till later.
+                in the credentials tab.<br>
+                All text is left as json atm, will leave pretty printing till later.
 
-                Anoncreds Stages: (3.1 and 3.2 alt and not currently in the demo)
-                    1. Bank agent issues (offer of) payment credential to user
-                    2. Vendor requests proof of payment to user
-                    3. Vendor issues package credential to User
-                    3.1 Shipping service issues proof of receipt to vendor
-                    3.2 User requests proof of receipt from vendor
-                    4. Shipper agent requests proof of package ownership to user
+                Anoncreds Stages: (3.1 and 3.2 alt and not currently in the demo)<br>
+                    1. Bank agent issues (offer of) payment credential to user<br>
+                    2. Vendor requests proof of payment to user<br>
+                    3. Vendor issues package credential to User<br>
+                    3.1 Shipping service issues proof of receipt to vendor<br>
+                    3.2 User requests proof of receipt from vendor<br>
+                    4. Shipper agent requests proof of package ownership to user<br>
 
 
             <div id="connection_stuff">
                 <h3>
-                    Connection-related actions
+                    Actions
                 </h3>
                 {% if name != "flaskuser" %}
                 <Button id = "inv_but" onclick="createInvite()" value="proofbutton">Create Invite</Button>
                 {% endif %}
-                <Button id = "get_conns" onclick="getConnections()" value="connButton">Check Connection History</Button>
-                <Button id = "get_active_conns" onclick="getActiveConnections()" value="activeConnButton">Check active connections</Button>
                 <Button id = "status" onclick="getStatus()" value="statusButton">Get Server Status</Button>
             </div>
             <div id = "inputstuff">

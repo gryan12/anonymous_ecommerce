@@ -65,8 +65,7 @@ def render_interface():
 @app.route("/home/connections", methods=["GET"])
 def render_connections():
     name = os.getenv("ROLE")
-    resp = ob.get_public_did
-    return render_template("connections.html", name=name, did=resp["did"])
+    return render_template("connections.html", name=name)
 
 
 @app.route("/home/connections", methods=["POST"])
@@ -198,6 +197,16 @@ def rec_inv():
     return redirect(request.referrer)
 
 
+@app.route("/connections/current/", methods=["POST"])
+def set_current_conn():
+    print(request.headers)
+    data = request.json
+    print(data)
+    if "selected_connection" in data:
+        if data["selected_connection"] is not None:
+            agent_data.current_connection = data["selected_connection"]
+    return redirect(request.referrer)
+
 @app.route("/get_connections/", methods=["GET"])
 def get_conns():
     r = make_response(json.dumps(ob.get_connections()))
@@ -210,6 +219,16 @@ def get_active_conns():
     agents = [
         (x['their_label'], x['connection_id']) for x in cons['results'] if x['state'] == "active"
     ]
+
+    if not agent_data.current_connection:
+        current = "None"
+    else:
+        current= agent_data.current_connection
+
+    conn_details = ob.get_connection_details(current)
+    if "their_label" in conn_details:
+        their_label = conn_details['their_label']
+        agents.append(("current_connection", their_label))
 
     if not agents:
         return make_response(json.dumps({"result": "no active connections"}), 200)
@@ -493,6 +512,25 @@ def request_proof_of_ownership():
     ).with_conn_id(agent_data.current_connection).build()
     return ob.send_proof_request(req)
 
+### Version 2 proof:
+
+def request_proof_of_receipt():
+    builder = build_proof_request(name="proof of shipped package", version="1.0")
+    req = builder.withAttribute(
+        "package_no",
+        restrictions=[{"issuer_did":agent_data.shipper_did}]
+    ).withAttribute(
+        "timestamp",
+        restrictions=[{"issuer_did":agent_data.shipper_did}]
+    ).withAttribute(
+        "status",
+        restrictions=[{"issuer_did": agent_data.shipper_did}]
+    ).with_conn_id(agent_data.current_connection).build()
+    return ob.send_proof_request(req)
+
+
+
+
 def request_proof_of_payment():
 
     print(agent_data.bank_did)
@@ -548,6 +586,23 @@ def register_package_schema(url):
         logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
         return id, resp["credential_definition_id"]
 
+def register_receipt_schema(url):
+    global agent_data
+    schema = {
+        "schema_name": "receipt_of_package",
+        "schema_version": "1.0",
+        "attributes": ["package_no", "timestamp", "status"]
+    }
+
+    response = ob.post(url + "/schemas", data=schema)
+    id =  response["schema_id"]
+    creddef = {"schema_id":id, "support_revocation": False}
+    resp = ob.register_creddef(creddef)
+    if resp:
+        agent_data.creddef_id = resp["credential_definition_id"]
+        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
+        return id, resp["credential_definition_id"]
+
 def send_package_cred_offer(conn_id, creddef_id):
     global agent_data
     logging.debug("Issue credential to user")
@@ -582,6 +637,21 @@ def send_payment_cred_offer(conn_id, creddef_id):
     offer_req = builder.build_offer("package credential issuance")
     agent_data.previews[creddef_id] = builder.build_preview()
     return ob.send_cred_offer(offer_req)
+
+def send_package_receipt_cred_offer(conn_id, creddef_id):
+    global agent_data
+
+    logging.debug("Issue receipt credential to vendor")
+    builder = build_cred(creddef_id)
+    builder.with_attribute({"package_no": "asdf1234"}) \
+        .with_attribute({"timestamp": str(int(time.time()))}) \
+        .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
+        .with_conn_id(conn_id)
+
+    offer_req = builder.build_offer("package-receipt credential issuance")
+    agent_data.previews[creddef_id] = builder.build_preview()
+    return ob.send_cred_offer(offer_req)
+
 
 ### END hardcoded demo funcs ###
 

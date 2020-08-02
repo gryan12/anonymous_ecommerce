@@ -35,24 +35,24 @@
   </div>
   <div class="container">
     <div class="row">
-      <div class="col-md-6">
+        <div class="col-lg-4">
+            <h3><u>Current Connection</u></h3>
+           <form id="active_con_form" id="current_conn_form" method="post" action="/connections/current">
+           <div class="dropdown">
+                 <button class="btn btn-primary dropdown-toggle" id="slct_btn" type="button" data-toggle="dropdown">Select Current Connection
+                 <span class="caret"></span></button>
+                 <ul class="dropdown-menu" id="current_dropdown">
+                 </ul>
+           </div>
+         </form>
+        </div>
+      <div class="col-lg-4">
         <h3><u>Active Connecitons</u></h3>
          <!-- todo select active connection -->
         <p id="active_connections"></p>
         <p id="active_connections_text"></p>
-         <!--form id="active_con_form">
-        <div class="dropdown">
-              <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Select Active Connection
-              <span class="caret"></span></button>
-              <ul class="dropdown-menu">
-                <li><a href="#">HTML</a></li>
-                <li><a href="#">CSS</a></li>
-                <li><a href="#">JavaScript</a></li>
-              </ul>
-        </div>
-      </form-->
       </div>
-      <div class="col-md-6">
+      <div class="col-lg-4">
         <h3><u>Full Connection History</u></h3>
         <p id ="conn_history"></p>
         <p id ="clean_conn_history"></p>
@@ -91,12 +91,55 @@
             for (var key in response) {
                 if (response.hasOwnProperty(key)) {
                     console.log(key + " -> " + response[key]);
-                    $('#active_connections_text').append(key + " : " + response[key] + "<br>");
+                    if (key != 'result' && key != 'current_connection') {
+                        $('#current_dropdown').append("<button class='dropdown_item'" + "type='button' onclick='setConnection(this.value)' value=" + response[key] + ">" + key + "</button>");
+                        $('#active_connections_text').append(key + " : " + response[key] + "<br>");
+                    }
+                    else if (key === "current_connection") {
+                        var curr = response[key]
+                        $('#slct_btn').html(response[key] + "<span class='caret'></span>");
+                    }
                 }
             }
         }});
     });
   </script>
+<script>
+</script>
+<script>
+    $('.dropdown_item').click(function(){
+    var formData = {
+      'selected_connection': $(this).attr('value')
+    };
+    console.log(formData);
+    $.ajax({
+          type: 'POST',
+          url: '/connections/current',
+          data: formData,
+          dataType: 'json',
+      })
+      .done(function(data) {
+          console.log(data);
+      })
+    });
+</script>
+<script>
+ function setConnection(val) {
+   var formData = {
+        'selected_connection': val
+   };
+   console.log(formData);
+    $.ajax({
+          type: 'POST',
+          url: '/connections/current',
+          data: JSON.stringify(formData),
+          contentType: 'application/json',
+          success: function(){
+              location.reload(true)
+          }
+    });
+ }
+</script>
 </body>
 </html>
 
