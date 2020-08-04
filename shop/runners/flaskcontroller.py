@@ -10,52 +10,19 @@ from flask import Flask, request, make_response, render_template, redirect
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
-from runners.support.creds import build_cred, build_proof_request, build_schema
 from runners.agent_proc import start_aries
-
-##globals
-LEDGER_URL = "http://172.17.0.1:9000"
-
-##mock replacement for a db (just grping state data)
-class Data:
-    def __init__(self):
-        self.current_connection =None,
-        self.previews = {}
-        self.creddef_id = None
-        self.attrs = {}
-        self.connections = []
-        self.active = False
-        self.stage = 0
-        self.agent_role = None
-
-        self.bank_did = None
-        self.shipper_did = None
-        self.vendor_did = None
-
-        self.presex_roles = {} #dict (placeholder cache) of <pres_ex_id> : <role>
-        self.credex = {} #dict (placeholder cache) of <cred_ex_id> : <role>
-
-    def add_connection(self, conn_id):
-        self.connections.append(conn_id)
-        self.current_connection = conn_id,
-
-    def add_preview(self, creddef_id, preview):
-        self.previews[creddef_id] = preview
-
-    def add_attrs(self, creddef_id, attrs):
-        self.attrs[creddef_id] = attrs
-
-
-##ugly but placeholder for db
-agent_data = Data()
+from runners.webhooks import webhooks
+import runners.support.settings as config
+import runners.transaction_logic as trans
 
 path = os.path.join(os.getcwd(), "shop/runners/static")
-print("PATH IS:",  path)
-
 app = Flask(__name__, static_folder=path)
-print("INSTANCE PATH IS:",  app.instance_path)
+app.register_blueprint(webhooks)
 
-#### START interface routes
+##ugly but placeholder for db
+#agent_data = Data()
+
+##### START interface routes
 @app.route("/home/", methods=["GET"])
 def render_interface():
     name = os.getenv("ROLE")
@@ -70,10 +37,8 @@ def render_connections():
 
 @app.route("/home/connections", methods=["POST"])
 def set_active_connection():
-    # expecting {"conn_id":conn_id"}
-    global agent_data
     data = json.loads(request.data)
-    agent_data.current_connection = data["conn_id"]
+    config.agent_data.current_connection = data["conn_id"]
 
     return make_response(
         json.dumps({"result": "Current connection successfully updated"}),
@@ -101,10 +66,10 @@ def req_proof():
     logging.debug("Has active connection :)")
     role=os.getenv("ROLE")
     if role == "flaskvendor":
-        request_proof_of_payment()
+        trans.request_proof_of_payment()
 
     elif role == "flaskshipper":
-        request_proof_of_ownership()
+        trans.request_proof_of_ownership()
 
     return make_response({"code":"success"})
 
@@ -116,10 +81,10 @@ def issue_proof_req():
     logging.debug("Has active connection :)")
     role=os.getenv("ROLE")
     if role == "flaskvendor":
-        request_proof_of_payment()
+        trans.request_proof_of_payment()
 
     elif role == "flaskshipper":
-        request_proof_of_ownership()
+        trans.request_proof_of_ownership()
 
     return make_response({"code":"success"})
 
@@ -127,9 +92,9 @@ def issue_proof_req():
 def render_credentials():
     name = os.getenv("ROLE")
 
-    bank_did = agent_data.bank_did
-    vendor_did = agent_data.vendor_did
-    shipper_did = agent_data.shipper_did
+    bank_did = config.agent_data.bank_did
+    vendor_did = config.agent_data.vendor_did
+    shipper_did = config.agent_data.shipper_did
 
     this_did_res = ob.get_public_did()
 
@@ -170,21 +135,20 @@ def make_inv():
 
 @app.route("/set_dids", methods=["POST"])
 def set_dids():
-    global agent_data
     did_dict = request.form.to_dict()
     print(did_dict)
 
     if "shipper_did" in did_dict.keys():
         if did_dict["shipper_did"]:
-            agent_data.shipper_did = did_dict["shipper_did"]
+            config.agent_data.shipper_did = did_dict["shipper_did"]
 
     if "bank_did" in did_dict.keys():
         if did_dict["bank_did"]:
-            agent_data.bank_did = did_dict["bank_did"]
+            config.agent_data.bank_did = did_dict["bank_did"]
 
     if "vendor_did" in did_dict.keys():
         if did_dict["vendor_did"]:
-            agent_data.vendor_did = did_dict["vendor_did"]
+            config.agent_data.vendor_did = did_dict["vendor_did"]
 
     return redirect(request.referrer)
 
@@ -204,7 +168,7 @@ def set_current_conn():
     print(data)
     if "selected_connection" in data:
         if data["selected_connection"] is not None:
-            agent_data.current_connection = data["selected_connection"]
+            config.agent_data.current_connection = data["selected_connection"]
     return redirect(request.referrer)
 
 @app.route("/get_connections/", methods=["GET"])
@@ -220,10 +184,10 @@ def get_active_conns():
         (x['their_label'], x['connection_id']) for x in cons['results'] if x['state'] == "active"
     ]
 
-    if not agent_data.current_connection:
+    if not config.agent_data.current_connection:
         current = "None"
     else:
-        current= agent_data.current_connection
+        current= config.agent_data.current_connection
 
     conn_details = ob.get_connection_details(current)
     if "their_label" in conn_details:
@@ -247,7 +211,7 @@ def send_msg():
         "content": message
     }
     logging.debug("Message contents: %s", message["content"])
-    response = ob.send_message(message, agent_data.current_connection)
+    response = ob.send_message(message, config.agent_data.current_connection)
     print(response)
     return make_response(json.dumps(response), 200)
 
@@ -263,177 +227,17 @@ def issue_credreq():
 
     if role == "flaskbank":
         logging.debug("MAJOR STAGE: ISSUEING PAYMENT CRED")
-        send_payment_cred_offer(agent_data.current_connection, agent_data.creddef_id)
+        trans.send_payment_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
 
     elif role == "flaskvendor":
         logging.debug("MAJOR STAGE 4: ISSUEING PACKAGE CRED")
-        send_package_cred_offer(agent_data.current_connection, agent_data.creddef_id)
+        trans.send_package_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
 
     return make_response({"code":"success", "role": role}, 200)
 
+##### END interface routes
 
-
-#### END interface routes
-
-#### START Aries inbound coms
-@app.route("/webhooks/topic/connections/", methods=["POST"])
-def connections():
-    global agent_data
-    logging.debug("CONNECTIONS REC")
-    data = json.loads(request.data)
-    state = data['state']
-    initiator = data['initiator']
-
-    if state == "request":
-        if initiator == "self":
-            logging.debug(f"invitation used by {data['their_label']}")
-
-    if state == "active":
-        logging.debug(f"Connection active with {data['their_label']} of did {data['their_did']} with initiator {data['initiator']}")
-        if not agent_data.active:
-            agent_data.active = True
-        agent_data.current_connection = data['connection_id']
-
-    return make_response(json.dumps({"code":"success"}), 200)
-
-@app.route("/webhooks/topic/basicmessages/", methods=["POST"])
-def messages():
-    data = json.loads(request.data)
-    logging.debug("received message : %s", data["content"])
-    return make_response(json.dumps({"code":"success"}), 200)
-
-@app.route("/webhooks/topic/issue_credential/", methods=["POST"])
-def issue_cred():
-    logging.debug("Received cred msg")
-    data = json.loads(request.data)
-    state = data["state"]
-    initiator = data["initiator"]
-    credex_id = data["credential_exchange_id"]
-
-    conn_id = data["connection_id"]
-    creddef_id = data["credential_definition_id"]
-    credex_id = data["credential_exchange_id"]
-
-    credex_details = ob.get_cred_ex_record(credex_id)
-
-   # role = None
-   # if "role" in credex_details:
-   #     role = credex_details["role"]
-   # elif initiator == "self":
-   #     role = "issuer"
-
-    logging.debug("...with state: %s, intitiator: %s, and id: %s", state, initiator, credex_id)
-    #logging.debug("With my role: %s", role)
-
-    if state == "request_received":
-        cred_preview = agent_data.previews[creddef_id]
-        if agent_data.agent_role == "flaskvendor":
-            cred = {
-                "comment": "issuance of payment credential",
-                "credential_preview": cred_preview
-            }
-        elif agent_data.agent_role == "flaskbank":
-            cred = {
-                "comment": "issuance of package credential",
-                "credential_preview": cred_preview
-            }
-        resp = ob.issue_credential(credex_id, cred)
-        print(f"issue cred webhook, conn id {conn_id}")
-
-    elif state == "offer_received":
-        ob.send_cred_request(credex_id)
-
-    elif state == "credential_acked":
-        logging.debug("Credential stored")
-
-    return make_response(json.dumps({"code": "success"}), 200)
-
-#todo move proof and cred handing logic to their own funcs/objs
-@app.route("/webhooks/topic/present_proof/", methods=["POST"])
-def present_proof():
-    data = json.loads(request.data)
-    presex_id = data["presentation_exchange_id"]
-    state = data["state"]
-    logging.debug(f"message recieved thoruhg prsent proof, with creedx_id: {presex_id} and state: {state}")
-
-
-    #todo: account for role
-
-    if state == "presentation_received":
-        logging.debug("received user proof presentation")
-
-        proof = ob.verify_presentation(presex_id)
-        logging.debug("Verification result is: %s", proof["verified"])
-
-        ##only do the following if verified == True, leaving as is for the mo
-        #if agent_data.agent_role == "flaskvendor":
-        #    logging.debug("MAJOR STAGE 4: ISSUEING PACKAGE CRED")
-        #    send_package_cred_offer(agent_data.current_connection, agent_data.creddef_id)
-
-    if data["role"] == "prover":
-        logging.debug("present proof webhook as prover")
-        pres_req = data["presentation_request"]
-        print("pres req: ", pres_req)
-
-        if state == "request_received":
-            ref_creds = {}
-            req_creds = ob.get_req_creds(presex_id)
-            print("req creds: ", req_creds)
-
-            print(req_creds)
-            #todo move logic to builder object this is horrific
-
-            if req_creds:
-                for row in sorted(
-                    req_creds,
-                    key=lambda c: int(c["cred_info"]["attrs"]["timestamp"]),
-                    reverse=True,
-                ):
-                    for ref in row["presentation_referents"]:
-                        if ref not in ref_creds:
-                            ref_creds[ref] = row
-
-                revealed = {}
-                for req_attr in pres_req["requested_attributes"]:
-                    if req_attr in ref_creds:
-                        revealed[req_attr] = {
-                            "cred_id": ref_creds[req_attr]["cred_info"]["referent"], "revealed": True,
-                        }
-                    else:
-                        logging.debug("No credential found in wallet for requested attribute")
-
-                preds = {}
-                for req_pred in pres_req["requested_predicates"]:
-                    if req_pred in ref_creds:
-                        preds[req_pred] = {
-                            "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
-                        }
-
-                proof_pres = {
-                    "requested_predicates": preds,
-                    "requested_attributes": revealed,
-                    "self_attested_attributes": {},
-                }
-
-                print(proof_pres)
-
-                ob.send_presentation(proof_pres, presex_id)
-
-    return make_response(json.dumps({"code":"success"}), 200)
-
-@app.route("/webhooks/topic/<topicname>/", methods=["POST", "GET"])
-def catch(topicname):
-    print("got unhandled request of topic: ", topicname)
-    return make_response(json.dumps({"code":"not yet done"}), 501)
-
-
-@app.route("/webhooks/topic/problem_report/", methods=["POST"])
-def handle_problem():
-    data = json.loads(request.data)
-    logging.debug("received erorr message : %s", data["content"])
-    return make_response(json.dumps({"code": "success"}), 200)
-
-### END webhooks:
+#general funcs
 def is_verified(presex_id):
     resp = ob.get_pres_ex_details(presex_id)
     if resp['state'] != "verified":
@@ -467,6 +271,7 @@ def gen_rand_seed():
     seed = ("flask_s_000000000000000000000000" + name)[-32:]
     return name, seed
 
+##end funcs
 
 def await_agent(admin_url):
     while True:
@@ -481,195 +286,18 @@ def await_agent(admin_url):
             pass
         time.sleep(2)
 
-def register_schema(name, version, attrs, revocation=False):
-    schema = build_schema(name, version, attrs)
-    print(schema)
-    resp = ob.register_schema(schema)
-    print(resp)
-    id = resp["schema_id"]
-    creddef = {"schema_id": id, "support_revocation": revocation}
-    resp = ob.register_creddef(creddef)
-    creddef_id = resp["credential_definition_id"]
-    global agent_data
-    agent_data.creddef_id = creddef_id
-    return id, creddef_id
-
-### START hardcoded demo funcs####
-def request_proof_of_ownership():
-
-    if not agent_data.vendor_did:
-        vendor_did = "HegZx8K7fExo4VKjcw52cX"
-    else:
-        vendor_did = agent_data.vendor_did
-
-    builder = build_proof_request(name="proof of package ownership", version="1.0")
-    req = builder.withAttribute(
-        "package_no",
-        restrictions=[{"issuer_did":vendor_did}]
-    ).withAttribute(
-        "timestamp",
-        restrictions=[{"issuer_did":vendor_did}]
-    ).with_conn_id(agent_data.current_connection).build()
-    return ob.send_proof_request(req)
-
-### Version 2 proof:
-
-def request_proof_of_receipt():
-    builder = build_proof_request(name="proof of shipped package", version="1.0")
-    req = builder.withAttribute(
-        "package_no",
-        restrictions=[{"issuer_did":agent_data.shipper_did}]
-    ).withAttribute(
-        "timestamp",
-        restrictions=[{"issuer_did":agent_data.shipper_did}]
-    ).withAttribute(
-        "status",
-        restrictions=[{"issuer_did": agent_data.shipper_did}]
-    ).with_conn_id(agent_data.current_connection).build()
-    return ob.send_proof_request(req)
-
-
-
-
-def request_proof_of_payment():
-
-    print(agent_data.bank_did)
-    if not agent_data.bank_did:
-        print("agent data has no bank did")
-        bank_did = "Vmc6AeqQQZ8frqF5zPCZtX"
-    else:
-        bank_did = agent_data.bank_did
-    print(bank_did)
-
-    builder = build_proof_request(name="proof of payment", version="1.0")
-    req = builder.withAttribute(
-        "transaction_no",
-        restrictions=[{"issuer_did":bank_did}]
-    ).withAttribute(
-        "timestamp",
-        restrictions=[{"issuer_did":bank_did}]
-    ).with_conn_id(agent_data.current_connection).build()
-    return ob.send_proof_request(req)
-
-def register_payment_schema(url):
-    global agent_data
-    attrs = ["transaction_no", "timestamp"]
-    schema = {
-        "schema_name": "payment_credential",
-        "schema_version": "1.0",
-        "attributes": ["transaction_no", "timestamp"]
-    }
-    response = ob.post(url + "/schemas", data=schema)
-    id = response["schema_id"]
-    creddef = {"schema_id": id, "support_revocation": False}
-    resp = ob.register_creddef(creddef)
-    if resp:
-        print(resp)
-        agent_data.creddef_id = resp["credential_definition_id"]
-        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
-        return id, resp["credential_definition_id"]
-
-def register_package_schema(url):
-    global agent_data
-    schema = {
-        "schema_name": "package_cred",
-        "schema_version": "1.0",
-        "attributes": ["package_no", "timestamp", "status", "shipper_did"]
-    }
-
-    response = ob.post(url + "/schemas", data=schema)
-    id =  response["schema_id"]
-    creddef = {"schema_id":id, "support_revocation": False}
-    resp = ob.register_creddef(creddef)
-    if resp:
-        agent_data.creddef_id = resp["credential_definition_id"]
-        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
-        return id, resp["credential_definition_id"]
-
-def register_receipt_schema(url):
-    global agent_data
-    schema = {
-        "schema_name": "receipt_of_package",
-        "schema_version": "1.0",
-        "attributes": ["package_no", "timestamp", "status"]
-    }
-
-    response = ob.post(url + "/schemas", data=schema)
-    id =  response["schema_id"]
-    creddef = {"schema_id":id, "support_revocation": False}
-    resp = ob.register_creddef(creddef)
-    if resp:
-        agent_data.creddef_id = resp["credential_definition_id"]
-        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
-        return id, resp["credential_definition_id"]
-
-def send_package_cred_offer(conn_id, creddef_id):
-    global agent_data
-    logging.debug("Issue credential to user")
-
-    if not agent_data.shipper_did:
-        shipper_did = "placeholder"
-    else:
-        shipper_did = agent_data.shipper_did
-
-    builder = build_cred(creddef_id)
-    builder.with_attribute({"package_no": "asdf1234"}) \
-        .with_attribute({"timestamp": str(int(time.time()))}) \
-        .with_attribute({"shipper_did": shipper_did}) \
-        .with_attribute({"status": "at_shipping-service"}) \
-        .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
-        .with_conn_id(conn_id)
-
-    offer_req = builder.build_offer("package credential issuance")
-    agent_data.previews[creddef_id] = builder.build_preview()
-    return ob.send_cred_offer(offer_req)
-
-def send_payment_cred_offer(conn_id, creddef_id):
-    global agent_data
-
-    logging.debug("Issue credential to user")
-    builder = build_cred(creddef_id)
-    builder.with_attribute({"transaction_no": "asdf1234"}) \
-        .with_attribute({"timestamp": str(int(time.time()))}) \
-        .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
-        .with_conn_id(conn_id)
-
-    offer_req = builder.build_offer("package credential issuance")
-    agent_data.previews[creddef_id] = builder.build_preview()
-    return ob.send_cred_offer(offer_req)
-
-def send_package_receipt_cred_offer(conn_id, creddef_id):
-    global agent_data
-
-    logging.debug("Issue receipt credential to vendor")
-    builder = build_cred(creddef_id)
-    builder.with_attribute({"package_no": "asdf1234"}) \
-        .with_attribute({"timestamp": str(int(time.time()))}) \
-        .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
-        .with_conn_id(conn_id)
-
-    offer_req = builder.build_offer("package-receipt credential issuance")
-    agent_data.previews[creddef_id] = builder.build_preview()
-    return ob.send_cred_offer(offer_req)
-
-
-### END hardcoded demo funcs ###
-
 def input_json_invite(input_json):
     resp = ob.receive_invite(invite_json=input_json)
     return resp
 
 def output_json_invite():
-    global agent_data
-
     resp = ob.create_invite()
-    print(json.dumps(resp["invitation"]))
-    agent_data.current_connection = resp["connection_id"]
+    config.agent_data.current_connection = resp["connection_id"]
     return resp["connection_id"]
 
 def await_connection():
     while True:
-        if not agent_data.active :
+        if not config.agent_data.active :
             logging.debug("WAITING FOR CONNECTION")
             time.sleep(2)
         else:
@@ -701,11 +329,12 @@ def getStageAndRole(credex_id):
     return ob.get_cred_ex_record(credex_id)
 
 def main():
-    global agent_data ##placeholder
+
+    config.setup()
 
     start_port = int(os.getenv("AGENT_PORT"))
     agent_role = os.getenv("ROLE")
-    agent_data.agent_role = agent_role
+    config.agent_data.agent_role = agent_role
     host = os.getenv("DOCKERHOST")
     logging.debug("Init controller with role: %s, listenting on port: %s", agent_role, str(start_port))
 
@@ -726,13 +355,13 @@ def main():
     await_agent(agent_url)
 
     if agent_role == "flaskbank":
-        register_payment_schema(agent_url)
+        trans.register_payment_schema(agent_url)
 
     elif agent_role == "flaskvendor":
-        register_package_schema(agent_url)
+        trans.register_package_schema(agent_url)
 
     connection_id = output_json_invite()
-    agent_data.connection_id = connection_id
+    config.agent_data.connection_id = connection_id
 
 
     app.run(host='0.0.0.0', port=start_port+2)
