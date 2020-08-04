@@ -1,169 +1,88 @@
+Detailed description of how the DIComms would work.
 
-Anoncreds transaction protocol
-Plaintext:
+Precurosor: Payment system(s) (named Bank for short) and shipping services that are used in the application register public
+DIDs and required schemas and creddefs
 
-(Bank agent(s) write cred schema + def for payment confirmation to the ledger)
-(User choses to buy product. Completes anonymous payment for required amount)
---> Bank issues proof of paymen to the user
---> User initiates connection with Vendor through their public did (
---> User proves that they are responsible for a given transaction id
-    --var 1---
-(The vendor packages users goods, labelling it with a unique package number)
-(The vendor posts the package to the shipping service)
---> The vendor issues a credential to the user confirming their package number, alogn with the DID of the shipping service (may not be necessary)
---> The user initiates a connection with the shipper through their endpoint speicifed in their diddoc
---> the shipper requests proof-of-package ownership (snd self-attested address -- mb in the proof or not?)
---> The user proves they own the credential for a package, and provides their address
-(The shipping service posts the package to the specified address)
+1. A vendor registers with the website. A public DID is created (NYM transaction)
+	along with the required schemas and credential definitions.
 
---ver 2--
+2. The vendor creates a market listing. This listing, when submitted, is now searchable by users of
+	the application through app code. Storage/transmisiso thorugh IPFS (ideally)
 
----> The vendor issues a credential to the user confirming their package numebr ((and RoP)))
-(vendor ships the package)
----> The shipping service receives the package, issues a credential to the vendor confirming possefssion of package
----> the vendor presents proof to the user that the shipping service is in possession of package
----> The user initaitses connection with shipping servcie
----> The shipping service requests proof of package ownership. user obliges
----> ...and provices addresss
-(the shipping sercice posts package to speicifed address)
+3. A user finds a market listing. They initiate a DIDComm session through the invite URL that
+	found on the listing.
 
+	Credential proposal for payment information
+	    If item available:
+		    protocol for credential issue
+		else:
+		     problem report
 
+5. The User, proves to the payment service that the given payment endpoint is expecting the given amount of funds. Could be potentially useful for any potential implementations of conflict resoluiton.
+        Aries protocol:
+            Credential proposal
+            Credential offer
+            Credential req
+            Credentual issueance
 
-//schema attrs
+6. Through the payment service, the user pays the required amount to the vendor.
 
-//payemnt, placeholder. made by bank
-{
-	"name": "transaction_id",
-	"name": "recipient", 
-	"name": "amount",
-}
+7. The agent of the payment service issues the User a credential containing a the transaction ID (or the amount and endpoint, depends)
+        Aries protocol:
+            Credential offer
+            Credential req
+            Credential issuance
 
+8. The user proves to the vendor they paid for the items(s)
+    Aries protocol:
+        Proof proposal
+        Proof request
+        Proof presentation
+            (Proof verification)
 
+    ----- Current Uncertainty: Specifics of interaction details between the Vendor and the Shipper. ------
+    ----- How a vendor informs a shipping service that they have received a parcel in particlar ------
+9. The Vendor packages the users goods, and issues them a credential for package ownership. The vendor ships the package to the shipping service.
 
-//order number
-{
-	"name": "order_no",
-	"name": "product_id", 
-	"name": "package_no",
-	"name": "payment_received", 
-	"name": "date",
-	"name": "status",
-	"name": "shipper_did",
-}
-
-
-//
-package received
-{
-	"name": "shipping_service_name", 
-	"name": "did", 
-	"name": "package_no", 
-	"name": "date_received", 
-	"name": "vendor_of_origin",
-}
+    --cool idea---
+10. Perhaps through a QR invite code present on the package itself, the shipping service initiates connection with the vendor, and issues credential that they are in possession
+    of given package number.
+        Aries protocol:
+            credential offer
+            credential request
+            credential issuance
 
 
-//proof 1: proof of payment. Purpose: prove that user was responsible for a given transaction
-{
-	{
-		"name": "transcation_id",
-		"restrictions": [{"issuer_did": payment_service_did}], //basically, require a transaction id credential from the given payment service
-	}
-
-	//proof that the amount sent == the price of the required item. likely not needed as a credential 
-	{
-		"name": "amount", 	
-		"p_type": "==", 
-		"p_value": price_lookup(c_prod_id)
-		"restrictions": [{"issuer_did": payment_service_did}], //basically, require a transaction id credential from the given payment service
-	}
-}
+11. The vendor proves to the user that the shipping service is in possession of the parcel
+    Aries protocol:
+        Proof proposal
+        Proof request
+        Proof presentation
+            (verification)
 
 
-//proof 2: Proof of package ownership. Purpose: prove that user owns a given package
-
-{
-	{
-		"name": "status", 	
-		"p_type": "==", 
-		"p_value": "received", 
-		"restrictions": [{"issuer_did": shipping_service_did}]
-	},
-
-	{
-		"name": "shipping_service_name", 	//self-attested
-	},
-
-}
-
-//proof 3: proof of package ownership. Purose: user to prove that they own a given package
-{
-	{
-		"name": "package_id",
-		"p_type": "==", 
-		"p_value": packages[c_id] 
-		"restrictions": [{"issuer_did": vendor_public_did}] //? maybe. not quite yet certain.
-	}
-}
-
-CREDENDIALS:
-#1: payment credential. placeholder, just
-{
-    {
-
-    },
-
-    {
-
-    }.
-}
-
-#2: package credential
-{
-    {
-
-    },
-
-    {
-
-    }.
-}
-
-#3 shipping-possession-cred
-{
-    {
-
-    },
-
-    {
-
-    }.
-}
+12. User initaites connection with the shipping service (through endpoint in DIDDoc / publicly available invitation).
+    Shipping service requsets proof of package ownership
+        Aries protocol:
+            Proof proposal
+            Proof request
+            Proof presentation
+                (verification)
 
 
+13. The vendor ships the package through address (can be a self-attested part of the proof). Fin
+
+	Credential schemas required:                    Issuer:         holder:
+	    Payment agreement credential                Vendor          User
+	    Successful payment credential               Bank            User
+	    Package (ownership) credential              Vendor          User
+	    Receipt of package credential               Shipper         Vendor
+
+	Proofs required:                        prover:      verifier:
+	    Proof of payment agreement:         User         Bank
+	    Proof of payment success            User         Vendor
+	    Proof of receipt of package         Vendor       User
+	    Proof of ownership                  User         Shipper
 
 
-####PROOFS:
-the restrictions hsould be a creddef id (make known through the aplpication code) rather than a did, as the latter
-can get muddied a bit i think with other stuff idk
-
-
-//protocol 
-
-1. Purchaser, through the application, orders an item. This reserves an/the item from the sellers stock. The user, through some given endpoint provided by the seller, 
-initiates anonymous ZKP-faciitated (3rd party) payment to the seller for the amount of the item. 
-
-2. The payment service offers a credential to the buyer stating the amount they paid, and the/an identifier for the transcaction (that the vendor can verify). 
-
-3. the user proves to the vendor that they sent them the required amount of money, by proving with their credentials that they were the source of the anonymous payment. 
-
-4. the vendor issues a credential to the user that payment has been received, the order number, and their package number. the seller then ships the package to the shipping service. 
-
-5. the shipping service issues the vendor a credential that they have received a package of a given package/order number. importantly, this is with anonymous pairwise dids such that the shipper does not have any way of identifying who the vendor is/was. 
-
-6. the vendor proves to the user that the shipping service has received their package. 
-
-7. the user (initiates comms via public did) with shipping service, proving ownership of the package number, and providing the desired shipping addresss. 
-
-8. the shipping service labels the package and ships it to the desired location. 
 
