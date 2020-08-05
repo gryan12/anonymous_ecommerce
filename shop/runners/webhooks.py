@@ -14,7 +14,6 @@ webhooks = Blueprint('webhooks', __name__)
 
 @webhooks.route("/webhooks/topic/connections/", methods=["POST"])
 def connections():
-   # global agent_data
     logging.debug("CONNECTIONS REC")
     data = json.loads(request.data)
     state = data['state']
@@ -26,11 +25,22 @@ def connections():
 
     if state == "active":
         logging.debug(f"Connection active with {data['their_label']} of did {data['their_did']} with initiator {data['initiator']}")
+
+        if data['their_label'] == "flaskbank":
+            #config.bank_did = data['their_did']
+            logging.debug("Connection with BANK agent detected, with their did: %s", data["their_did"])
+        elif data['their_label'] == "flaskvendor":
+            #config.vendor_did = data['their_did']
+            logging.debug("Connection with VENDOR agent detected, with their did: %s", data["their_did"])
+        elif data['their_label'] == "flaskshipper":
+            #config.shipper_did = data['their_did']
+            logging.debug("Connection with SHIPPER agent detected, with their did: %s", data["their_did"])
+
         if not config.agent_data.active:
             config.agent_data.active = True
         config.agent_data.current_connection = data['connection_id']
 
-    return make_response(json.dumps({"code":"success"}), 200)
+    return make_response(json.dumps({"code": "success"}), 200)
 
 @webhooks.route("/webhooks/topic/basicmessages/", methods=["POST"])
 def messages():
@@ -47,8 +57,6 @@ def issue_cred():
     conn_id = data["connection_id"]
     creddef_id = data["credential_definition_id"]
     credex_id = data["credential_exchange_id"]
-
-    credex_details = ob.get_cred_ex_record(credex_id)
 
     logging.debug("...with state: %s, intitiator: %s, and id: %s", state, initiator, credex_id)
 

@@ -14,11 +14,7 @@ fi
 
 ARGS="${ARGS:+$ARGS }$i"
 
-if [ "$AGENT" = "alice" ]; then
-  AGENT_MODULE="alice"
-  AGENT_PORT=8030
-  AGENT_PORT_RANGE=8030-8037
-elif [ "$AGENT" = flaskbank"" ]; then
+if [ "$AGENT" = flaskbank"" ]; then
   AGENT_MODULE="flaskbank"
   AGENT_PORT=5040
   AGENT_PORT_RANGE=5040-5047
@@ -42,8 +38,8 @@ echo "Preparing agent image..."
 docker build -q -t transaction-demo -f ../docker/Dockerfile.shop .. || exit 1
 
 if [ ! -z "$DOCKERHOST" ]; then
-  # provided via APPLICATION_URL environment variable
   export RUNMODE="docker"
+  echo "1"
 elif [ -z "${PWD_HOST_FQDN}" ]; then
   DOCKERHOST=`docker run --rm --net=host eclipse/che-ip`
   export RUNMODE="docker"
@@ -68,8 +64,6 @@ if ! [ -z "$AGENT_ENDPOINT" ]; then
 fi
 
 DOCKER=${DOCKER:-docker}
-
-echo "Starting $AGENT..."
 
 $DOCKER run --name $AGENT --rm -it ${DOCKER_OPTS} \
   --network=${DOCKER_NET} \

@@ -1,4 +1,3 @@
-global agent_data
 
 class Data:
     def __init__(self):
@@ -8,8 +7,10 @@ class Data:
         self.attrs = {}
         self.connections = []
         self.active = False
+        self.has_public = False
         self.stage = 0
         self.agent_role = None
+        self.test = "hello"
 
         self.bank_did = None
         self.shipper_did = None
@@ -28,12 +29,15 @@ class Data:
     def add_attrs(self, creddef_id, attrs):
         self.attrs[creddef_id] = attrs
 
-
 def setup():
     global agent_data
     agent_data = Data()
+    agent_data.test = "Hello this is a test variable from settings"
 
 
+agent_data = None
+
+testvar = "hello"
 
 
 

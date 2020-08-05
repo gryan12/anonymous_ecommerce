@@ -28,6 +28,9 @@
 <div class="jumbotron text-center">
     {% if name %}
     <h1> {{ name }}: Aries agent is up and running! </h1>
+        {% if did %}
+        <h4>Registered public DID: {{ did }}</h4>
+        {% endif %}
     {% else %}
     <h1> Sorry, no agent detected </h1>
     {% endif %}

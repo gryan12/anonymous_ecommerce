@@ -60,6 +60,9 @@ def get_credentials():
     req_url = AGENT_URL + "/credentials"
     return get(req_url)
 
+def get_creddef_id_by_name(name):
+    req_url = AGENT_URL + f"/credential-definitions/created?schema_name={name}"
+    return get(req_url)
 
 def remove_credential(id):
     req_url = AGENT_URL + f"/credential/{id}/remove"
@@ -77,6 +80,11 @@ def get_cred_ex_records():
 def send_proof_request(proof_req):
     req_url = AGENT_URL + "/present-proof/send-request"
     return post(req_url, data=proof_req)
+
+def send_proof_proposal(proposal):
+    req_url = AGENT_URL + "/present-proof/send-proposal"
+    return post(req_url, data=proposal)
+
 
 def present_proof(presentation, id):
     req_url = AGENT_URL + f"present-proof/records/{id}/verify-presentation"
@@ -103,7 +111,8 @@ def get_pres_credentials(id):
     return get(req_url)
 
 def get_req_creds(presex_id):
-    req_url = AGENT_URL + f"/prsent-proof/records/{presex_id}/credentials"
+    req_url = AGENT_URL + f"/present-proof/records/{presex_id}/credentials"
+    return get(req_url)
 
 ##connections
 def create_invite():
@@ -147,4 +156,8 @@ def get_status():
 
 def get_public_did():
     req_url = AGENT_URL + "/wallet/did/public"
+    return get(req_url)
+
+def get_connection_details(conn_id):
+    req_url = AGENT_URL + f"/connections/{conn_id}"
     return get(req_url)

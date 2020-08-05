@@ -67,5 +67,10 @@ File description:
 
 	-> start_shop_agent.sh: script to initialise an agent
 
+Assumptions:
+    The public DID of payment services are made available through application code.
+    The public DID of the shipping service used is made available through application code.
+    The public DID of the vendor is known through the application code
+
 
 

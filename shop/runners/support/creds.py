@@ -3,6 +3,15 @@ import json
 # Code for the creation of aries JSON objects
 # needed for aries protocols
 
+#TYPES = {
+#    "propose_presentation": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation",
+#    "presentation_preview":
+#}
+
+
+
+
+
 def build_schema(name, version, attributes):
     schema = {
         "schema_name": name,
@@ -119,6 +128,9 @@ def build_credential_proposal(self,
         proposal["schema_name"] = schema_name
     if prop_schema:
         proposal["credential_proposal"] = prop_schema
+
+
+###PROOF BUILDERS###
 
 def build_proof_request(name=None, version=None):
     return ProofReqBuilder(name=name, version=version)
@@ -241,12 +253,74 @@ class ProofReqBuilder:
 
         return proof_proposition
 
-def buildProofWebRequest(connection_id, proof, trace=False): 
-    webReq =  {
-        "connection_id":connection_id,
-        "proof_request":proof,
+
+def build_proof_proposal(name=None):
+    return ProofPropositionBuilder()
+
+
+
+class ProofPropositionBuilder:
+
+    def __init__(self, name=None):
+        self.name = name
+        self.attrs = []
+        self.preds = []
+        self.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation"
+
+
+    def withAttribute(self, name, cred_def_id=None, mime_type=None, value=None, referent=None):
+        attribute = {
+            "name": name,
+        }
+        if cred_def_id:
+            attribute["cred_def_id"] = cred_def_id
+
+        if value:
+            attribute["value"] = value
+
+        if cred_def_id and referent:
+            attribute["referent"] = referent
+
+        self.attrs.append(attribute)
+        return self
+
+    def withPredicate(self, name, threshold, cred_def_id=None, predicate=">="):
+
+        predicate = {
+            "name": name,
+            "cred_def_id": cred_def_id,
+            "predicate": predicate,
+            "threshold": threshold
+        }
+
+        self.preds.append(predicate)
+        return self
+
+
+    def build(self, connection_id, comment=None, auto_present=True):
+
+        preview = {
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
+            "attributes": self.attrs,
+            "predicates": self.preds
+        }
+        proposition = {
+            "@type": self.type,
+            "connection_id": connection_id,
+            "presentation_proposal": preview
+        }
+        if comment:
+            proposition["comment"] = comment
+
+        return proposition
+
+
+
+
+def buildProofWebRequest(connection_id, proof, trace=False):
+    webReq = {
+        "connection_id": connection_id,
+        "proof_request": proof,
         "trace": trace
     }
     return json.dumps(webReq)
-
-

@@ -26,7 +26,13 @@ app.register_blueprint(webhooks)
 @app.route("/home/", methods=["GET"])
 def render_interface():
     name = os.getenv("ROLE")
-    return render_template("interface.html", name=name)
+    if config.agent_data.has_public:
+        did = get_public_did()
+        return render_template("interface.html", name=name, did=did)
+    else:
+        return render_template("interface.html", name=name)
+
+
 
 
 @app.route("/home/connections", methods=["GET"])
@@ -51,6 +57,7 @@ def render_proofs():
     name = os.getenv("ROLE")
     return render_template("proofs.html", name=name)
 
+
 @app.route("/home/proofs/history", methods=["GET"])
 def get_proof_history():
     return make_response(
@@ -58,10 +65,23 @@ def get_proof_history():
         200
     )
 
+@app.route("/propose_proof/", methods=["GET"])
+def prop_proof():
+    if not hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+
+    role = os.getenv("ROLE")
+
+    if role == "flaskuser":
+        trans.propose_proof_of_payment(config.current_connection, config.payment_creddef)
+
+
+
+
 @app.route("/request_proof/", methods=["GET"])
 def req_proof():
     if not hasActiveConnection():
-        return make_response({"code":"failure", "reason":"no active connections"})
+        return make_response({"code": "failure", "reason": "no active connections"})
 
     logging.debug("Has active connection :)")
     role=os.getenv("ROLE")
@@ -71,12 +91,12 @@ def req_proof():
     elif role == "flaskshipper":
         trans.request_proof_of_ownership()
 
-    return make_response({"code":"success"})
+    return make_response({"code": "success"})
 
 @app.route("/proofs/request", methods=["GET"])
 def issue_proof_req():
     if not hasActiveConnection():
-        return make_response({"code":"failure", "reason":"no active connections"})
+        return make_response({"code": "failure", "reason": "no active connections"})
 
     logging.debug("Has active connection :)")
     role=os.getenv("ROLE")
@@ -219,14 +239,17 @@ def send_msg():
 def issue_credreq():
 
     if not hasActiveConnection():
-        return make_response({"code":"failure", "reason":"agent has no active connections"})
-
-    logging.debug("Has active connection :)")
+        return make_response({"code": "failure", "reason": "agent has no active connections"})
 
     role = os.getenv("ROLE")
 
+    #creddef_ids = ob.get_creddef_id_by_name["package_cred"]
+    #if "credential_definition_ids" in creddef_ids:
+    #    if creddef_ids["credential_definition_ids"]:
+    #        creddef_id = creddef_ids["credential_definition_ids"][0]
+
     if role == "flaskbank":
-        logging.debug("MAJOR STAGE: ISSUEING PAYMENT CRED")
+        logging.debug("MAJOR STAGE: ISSUeING PAYMENT CRED")
         trans.send_payment_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
 
     elif role == "flaskvendor":
@@ -263,6 +286,7 @@ def register_did(ledger_url, seed=None, alias=None, role="TRUST_ANCHOR"):
         "role": role,
     }
     response = requests.post(ledger_url + "/register", data=json.dumps(content))
+    config.agent_data.has_public = True
     return json.loads(response.text)
 
 
@@ -295,6 +319,7 @@ def output_json_invite():
     config.agent_data.current_connection = resp["connection_id"]
     return resp["connection_id"]
 
+
 def await_connection():
     while True:
         if not config.agent_data.active :
@@ -303,6 +328,15 @@ def await_connection():
         else:
             logging.debug("CONNECTED")
             return True
+
+def get_public_did():
+    resp = ob.get_public_did()
+    res = resp["result"]
+    if "did" in res:
+        return res["did"]
+    else:
+        return None
+
 
 def flask_proc(host, port, debug=False):
     app.run(host=host, port=port, static_folder=os.path.abspath(os.getcwd() + '/static'))
@@ -332,6 +366,9 @@ def main():
 
     config.setup()
 
+    print("test::", config.testvar)
+    print("Test number two: ", config.agent_data.test)
+
     start_port = int(os.getenv("AGENT_PORT"))
     agent_role = os.getenv("ROLE")
     config.agent_data.agent_role = agent_role
@@ -359,6 +396,19 @@ def main():
 
     elif agent_role == "flaskvendor":
         trans.register_package_schema(agent_url)
+        creddef_ids = ob.get_creddef_id_by_name("package_cred")
+
+    if agent_role != "flaskuser":
+
+        upper_role = os.getenv("ROLE").upper()
+        pub_did_resp = ob.get_public_did()
+
+        did = pub_did_resp["result"]["did"]
+        logging.debug("pub did is: %s", did)
+
+        os.environ[upper_role] = did
+        logging.debug("set env for public did of: %s as %s", upper_role, did)
+
 
     connection_id = output_json_invite()
     config.agent_data.connection_id = connection_id
