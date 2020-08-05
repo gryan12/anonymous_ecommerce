@@ -1,9 +1,7 @@
 import json
 
-
-# just proving an api for making requests/proofs/creds more relaxing
-# i'm sure that this c++ builder style-code is not very pythonesque
-# so sry 4 tht will change
+# Code for the creation of aries JSON objects
+# needed for aries protocols
 
 def build_schema(name, version, attributes):
     schema = {
@@ -15,7 +13,7 @@ def build_schema(name, version, attributes):
 
 def build_cred_definition(schema_id, revocation=False):
     definition = {
-        "schema_id":schema_id,
+        "schema_id": schema_id,
         "support_revocation": revocation
     }
     return definition
@@ -28,8 +26,9 @@ class CredBuilder:
         self.attributes = {}
         self.as_json = False
         self.creddef_id = creddef_id
-        self.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview"
         self.conn_id = None
+        self.issuer_did = None
+        self.schema_name = None
 
     def withName(self, name):
         self.name = name
@@ -68,8 +67,8 @@ class CredBuilder:
 
     def build_preview(self):
         preview = {
-            "@type":self.type,
-            "attributes": [{"name":n, "value":v} for (n,v) in self.attributes.items()]
+            "@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+            "attributes": [{"name": n, "value": v} for (n,v) in self.attributes.items()]
         }
         return preview
 
@@ -96,9 +95,36 @@ class CredBuilder:
         return req
 
 
-def build_proof_request(name=None, version=None):
+def build_credential_proposal(self,
+                   comment="",
+                   prop_schema=None,
+                   schema_name=None,
+                   schema_version=None,
+                   cred_def_id = None,
+                   issuer_did=None
+                   ):
 
+    proposal = {
+        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.1/propose-credential",
+        "comment": comment,
+    }
+
+    if schema_version:
+        proposal["schema_version"] = schema_version
+    if cred_def_id:
+        proposal["cred_def_id"] = cred_def_id
+    if issuer_did:
+        proposal["issuer_did"] = issuer_did
+    if schema_name:
+        proposal["schema_name"] = schema_name
+    if prop_schema:
+        proposal["credential_proposal"] = prop_schema
+
+def build_proof_request(name=None, version=None):
     return ProofReqBuilder(name=name, version=version)
+
+def build_proof_proposal(comment="Proposal of proof"):
+    return ProofReqBuilder()
 
 class ProofReqBuilder:
     def __init__(self, name=None, version= None):
@@ -108,6 +134,7 @@ class ProofReqBuilder:
         self.version = version
         self.as_json = False
         self.tracing = False
+        self.comment = None
 
     def withName(self, name):
         self.name = name
@@ -177,7 +204,6 @@ class ProofReqBuilder:
         return self
 
     def build(self): 
-
         proof_request = {
             "name": self.name,
             "version": self.version,
@@ -199,6 +225,21 @@ class ProofReqBuilder:
             return json.dumps(web_req)
         return web_req
 
+
+    #todo make cleaner, include optional fields
+    def build_proposition(self):
+        presentation_preview = {
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
+            "attributes": self.attributes,
+            "predicates": self.preds,
+        }
+        proof_proposition = {
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation",
+            "comment": self.comment,
+            "presentation_proposal": presentation_preview
+        }
+
+        return proof_proposition
 
 def buildProofWebRequest(connection_id, proof, trace=False): 
     webReq =  {
