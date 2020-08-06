@@ -9,9 +9,6 @@ import json
 #}
 
 
-
-
-
 def build_schema(name, version, attributes):
     schema = {
         "schema_name": name,

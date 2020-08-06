@@ -9,6 +9,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
 import runners.support.settings as config
+import runners.transaction_logic as trans
 
 webhooks = Blueprint('webhooks', __name__)
 
@@ -54,10 +55,8 @@ def issue_cred():
     data = json.loads(request.data)
     state = data["state"]
     initiator = data["initiator"]
-    conn_id = data["connection_id"]
     creddef_id = data["credential_definition_id"]
     credex_id = data["credential_exchange_id"]
-
     logging.debug("...with state: %s, intitiator: %s, and id: %s", state, initiator, credex_id)
 
     if state == "request_received":
@@ -73,10 +72,16 @@ def issue_cred():
                 "credential_preview": cred_preview
             }
         resp = ob.issue_credential(credex_id, cred)
-        print(f"issue cred webhook, conn id {conn_id}")
 
     elif state == "offer_received":
         ob.send_cred_request(credex_id)
+
+    elif state == "credential_received":
+        config.agent_data.credentials.append(
+            {
+                data["connection_id"]: creddef_id
+            }
+        )
 
     elif state == "credential_acked":
         logging.debug("Credential stored")
@@ -92,61 +97,62 @@ def present_proof():
     logging.debug(f"message recieved thoruhg prsent proof, with creedx_id: {presex_id} and state: {state}")
 
 
-    #todo: account for role
+    if state == "proposal_received":
+        proposal = data["presentation_proposal_dict"]["presentation_proposal"]
+        print(proposal)
+        creddef_id = proposal["attributes"][0]["cred_def_id"]
+        logging.debug("received proposal for proof presentation: ")
+        if config.role == "flaskvendor":
+            print("config role: ", config.role)
+            logging.debug("... at vendor")
+            trans.request_proof_of_payment(creddef_id)
 
-    if state == "presentation_received":
+    elif state == "presentation_received":
         logging.debug("received user proof presentation")
         proof = ob.verify_presentation(presex_id)
         logging.debug("Verification result is: %s", proof["verified"])
 
-    if data["role"] == "prover":
-        logging.debug("present proof webhook as prover")
+
+    elif state == "request_received":
         pres_req = data["presentation_request"]
-        print("pres req: ", pres_req)
+        ref_creds = {}
+        req_creds = ob.get_req_creds(presex_id)
 
-        if state == "request_received":
-            ref_creds = {}
-            req_creds = ob.get_req_creds(presex_id)
-            print("req creds: ", req_creds)
+        if req_creds:
+            for row in sorted(
+                    req_creds,
+                    key=lambda c: int(c["cred_info"]["attrs"]["timestamp"]),
+                    reverse=True,
+            ):
+                for ref in row["presentation_referents"]:
+                    if ref not in ref_creds:
+                        ref_creds[ref] = row
 
-            print(req_creds)
-            #todo move logic to builder object this is horrific
+            revealed = {}
+            for req_attr in pres_req["requested_attributes"]:
+                if req_attr in ref_creds:
+                    revealed[req_attr] = {
+                        "cred_id": ref_creds[req_attr]["cred_info"]["referent"], "revealed": True,
+                    }
+                else:
+                    logging.debug("No credential found in wallet for requested attribute")
 
-            if req_creds:
-                for row in sorted(
-                        req_creds,
-                        key=lambda c: int(c["cred_info"]["attrs"]["timestamp"]),
-                        reverse=True,
-                ):
-                    for ref in row["presentation_referents"]:
-                        if ref not in ref_creds:
-                            ref_creds[ref] = row
+            preds = {}
+            for req_pred in pres_req["requested_predicates"]:
+                if req_pred in ref_creds:
+                    preds[req_pred] = {
+                        "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
+                    }
 
-                revealed = {}
-                for req_attr in pres_req["requested_attributes"]:
-                    if req_attr in ref_creds:
-                        revealed[req_attr] = {
-                            "cred_id": ref_creds[req_attr]["cred_info"]["referent"], "revealed": True,
-                        }
-                    else:
-                        logging.debug("No credential found in wallet for requested attribute")
+            proof_pres = {
+                "requested_predicates": preds,
+                "requested_attributes": revealed,
+                "self_attested_attributes": {},
+            }
 
-                preds = {}
-                for req_pred in pres_req["requested_predicates"]:
-                    if req_pred in ref_creds:
-                        preds[req_pred] = {
-                            "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
-                        }
+            print(proof_pres)
 
-                proof_pres = {
-                    "requested_predicates": preds,
-                    "requested_attributes": revealed,
-                    "self_attested_attributes": {},
-                }
-
-                print(proof_pres)
-
-                ob.send_presentation(proof_pres, presex_id)
+            ob.send_presentation(proof_pres, presex_id)
 
     return make_response(json.dumps({"code":"success"}), 200)
 

@@ -34,7 +34,7 @@ def render_interface():
 
 
 
-
+##connections
 @app.route("/home/connections", methods=["GET"])
 def render_connections():
     name = os.getenv("ROLE")
@@ -52,6 +52,7 @@ def set_active_connection():
     )
 
 
+##proofs
 @app.route("/home/proofs", methods=["GET"])
 def render_proofs():
     name = os.getenv("ROLE")
@@ -70,12 +71,12 @@ def prop_proof():
     if not hasActiveConnection():
         return make_response({"code": "failure", "reason": "no active connections"})
 
-    role = os.getenv("ROLE")
+    if config.role == "flaskuser":
+        logging.debug("proposing proof of payment")
+        payment_creddef = trans.get_payment_creddefid()
+        trans.propose_proof_of_payment(config.agent_data.current_connection, payment_creddef)
 
-    if role == "flaskuser":
-        trans.propose_proof_of_payment(config.current_connection, config.payment_creddef)
-
-
+    return make_response({"code": "received"})
 
 
 @app.route("/request_proof/", methods=["GET"])
@@ -147,11 +148,11 @@ def get_status():
     status = ob.get_status()
     return make_response(json.dumps(status), 200)
 
+
 @app.route("/create_invite/", methods=["GET"])
 def make_inv():
     resp = ob.create_invite()
     return make_response(json.dumps(resp["invitation"]), 200)
-
 
 @app.route("/set_dids", methods=["POST"])
 def set_dids():
@@ -363,25 +364,21 @@ def getStageAndRole(credex_id):
     return ob.get_cred_ex_record(credex_id)
 
 def main():
-
-    config.setup()
-
-    print("test::", config.testvar)
-    print("Test number two: ", config.agent_data.test)
-
     start_port = int(os.getenv("AGENT_PORT"))
     agent_role = os.getenv("ROLE")
     config.agent_data.agent_role = agent_role
     host = os.getenv("DOCKERHOST")
+
     logging.debug("Init controller with role: %s, listenting on port: %s", agent_role, str(start_port))
 
     if not start_port:
         logging.debug("error: no assigned port")
         sys.exit(-1)
+
     ##init aries
     name, seed = gen_rand_seed()
 
-    if agent_role is not "flaskuser":               ##the user should not be on the public ledger
+    if agent_role != "flaskuser":               ##the user should not be on the public ledger
         register_did("http://" + host + ":9000", seed, agent_role)
 
     agent_url = "http://" + host + ":" + str(start_port + 1)
@@ -396,7 +393,6 @@ def main():
 
     elif agent_role == "flaskvendor":
         trans.register_package_schema(agent_url)
-        creddef_ids = ob.get_creddef_id_by_name("package_cred")
 
     if agent_role != "flaskuser":
 
@@ -417,7 +413,7 @@ def main():
     app.run(host='0.0.0.0', port=start_port+2)
 
 if __name__ == "__main__":
+    config.setup()
     logging.basicConfig(level=logging.DEBUG, format=' %(threadName)s : %(message)s')
-    print("PATH IS: ", os.getcwd())
     main()
 

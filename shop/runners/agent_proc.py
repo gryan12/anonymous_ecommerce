@@ -68,10 +68,17 @@ def start_aries(start_port, seed, label, genesis_url=None):
         "--auto-accept-requests",
         "--auto-accept-invites",
         "--auto-store-credential",
+        "--debug-connections",
+        "--debug-credentials",
+        "--debug-presentations",
         ("--genesis-url", genesis_url),
         ("--seed", seed),
         ("--webhook-url", webhook_url)
     ]
+
+    # the user agent will perform no ledger transactions
+    if os.getenv("ROLE") == "flaskuser":
+        args.append("--wallet-local-did")
 
     args = list(flatten((["python3", "./bin/aca-py", "start"], args)))
     print("starting with args", args)
