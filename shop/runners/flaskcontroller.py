@@ -21,6 +21,66 @@ app.register_blueprint(webhooks)
 
 ##ugly but placeholder for db
 #agent_data = Data()
+##det endpoints
+##============================================================================
+#Call to propose for a proof.
+#If the user agent, then proposing proof of payment OR
+#proposing proof of
+@app.route("/propose_proof/", methods=["GET"])
+def prop_proof():
+    if not hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+
+    ##propose proof of payment
+    if config.role == "flaskuser":
+        logging.debug("proposing proof of payment")
+        payment_creddef = trans.get_payment_creddefid()
+        trans.propose_proof_of_payment(config.agent_data.current_connection, payment_creddef)
+
+    return make_response({"code": "received"})
+
+@app.route("/credentials/propose/", methods=["GET"])
+def prop_cred():
+    if not hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+
+    ##propose payment credential
+    if config.role == "flaskuser":
+        logging.debug("proposing payment agreement credential")
+        payment_creddef = trans.send_payment_agreement_proposal()
+
+    return make_response({"code": "received"})
+
+@app.route("/shop/request_purchase/", methods=["GET"])
+def req_purchase():
+
+    if not hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+
+    if config.role != "flaskuser":
+        make_response({"code": "not avialable for this agent"}, 500)
+
+    trans.send_payment_agreement_proposal()
+
+    return make_response({"code": "received"})
+
+
+@app.route("/shop/received_package/", methods=["GET"])
+def received_package():
+
+    if not hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+
+    if config.role != "flaskshipper":
+        make_response({"code": "not avialable for this agent"}, 500)
+
+    trans.send_package_receipt_cred_offer(config.agent_data.current_connection)
+
+    return make_response({"code": "received"})
+
+
+##================================================================
+
 
 ##### START interface routes
 @app.route("/home/", methods=["GET"])
@@ -66,18 +126,6 @@ def get_proof_history():
         200
     )
 
-@app.route("/propose_proof/", methods=["GET"])
-def prop_proof():
-    if not hasActiveConnection():
-        return make_response({"code": "failure", "reason": "no active connections"})
-
-    if config.role == "flaskuser":
-        logging.debug("proposing proof of payment")
-        payment_creddef = trans.get_payment_creddefid()
-        trans.propose_proof_of_payment(config.agent_data.current_connection, payment_creddef)
-
-    return make_response({"code": "received"})
-
 
 @app.route("/request_proof/", methods=["GET"])
 def req_proof():
@@ -108,6 +156,10 @@ def issue_proof_req():
         trans.request_proof_of_ownership()
 
     return make_response({"code":"success"})
+
+
+
+
 
 @app.route("/home/credentials", methods=["GET"])
 def render_credentials():
@@ -393,6 +445,7 @@ def main():
 
     elif agent_role == "flaskvendor":
         trans.register_package_schema(agent_url)
+        trans.register_payment_agreement_schema(agent_url)
 
     if agent_role != "flaskuser":
 

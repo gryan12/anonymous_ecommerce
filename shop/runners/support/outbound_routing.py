@@ -44,6 +44,10 @@ def send_cred_offer(offer_request):
     req_url = AGENT_URL + "/issue-credential/send-offer"
     return post(req_url, data=offer_request)
 
+def send_cred_proposal(proposal):
+    req_url = AGENT_URL + "/issue-credential/send-proposal"
+    return post(req_url, data=proposal)
+
 def send_cred_request(id):
     req_url = AGENT_URL + f"/issue-credential/records/{id}/send-request"
     return post(req_url)

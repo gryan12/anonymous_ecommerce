@@ -73,6 +73,7 @@ def start_aries(start_port, seed, label, genesis_url=None):
         "--debug-presentations",
         ("--genesis-url", genesis_url),
         ("--seed", seed),
+        "--preserve-exchange-records",
         ("--webhook-url", webhook_url)
     ]
 

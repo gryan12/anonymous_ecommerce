@@ -13,45 +13,34 @@ from runners.support.creds import build_cred, build_proof_request, build_schema,
 import runners.support.settings as config
 
 
-
 #### Stage 1: purchase request
+##todo the idea here is that initiating purchase of a prpduct would intitiate
+## a credential proposal that incldues the value to be paid, the listing id,
+## and an endpoint. The vendor cna then refuse or accept a requet to purchase,
+## with the latter involving issueing a credential of the relevant amount.
+## any potential dispute could be accomplised over resending a credential offer.
+
 
 def send_payment_agreement_proposal():
     offer_json = build_credential_proposal(
-        comment= "request for payment agreement credential",
-        schema_name= "payment agreement",
-        issuer_did= config.current_connection
+        config.agent_data.current_connection,
+        comment="request for payment agreement credential",
+        schema_name="payment agreement",
     )
     resp = ob.send_cred_proposal(offer_json)
     print("response to payment proposal:", resp)
     return resp
 
-
-def register_payment_agreement_schema(url):
-    schema = {
-        "schema_name": "payment_agreement",
-        "schema_version": "1.0",
-        "attributes": ["amount", "timestamp", "endpoint"]
-    }
-    response = ob.post(url + "/schemas", data=schema)
-    id = response["schema_id"]
-    creddef = {"schema_id": id, "support_revocation": False}
-    resp = ob.register_creddef(creddef)
-    if resp:
-        config.agent_data.creddef_id = resp["credential_definition_id"]
-        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
-        return id, resp["credential_definition_id"]
-
-
 def send_payment_agreement_cred_offer(conn_id, creddef_id):
     logging.debug("Issue credential to user")
     builder = build_cred(creddef_id)
-    builder.with_attribute({"transaction_no": "asdf1234"}) \
+    builder.with_attribute({"payment_endpoint": "placeholder_endpoint"}) \
         .with_attribute({"timestamp": str(int(time.time()))}) \
+        .with_attribute({"amount": "50"}) \
         .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
         .with_conn_id(conn_id)
 
-    offer_req = builder.build_offer("package credential issuance")
+    offer_req = builder.build_offer("purchase request")
     config.agent_data.previews[creddef_id] = builder.build_preview()
     return ob.send_cred_offer(offer_req)
 
@@ -59,7 +48,6 @@ def send_payment_agreement_cred_offer(conn_id, creddef_id):
 def refuse_payment_agreement(conn_id, creddef_id):
     #todo: return a problem report if vendor cant/wont sell
     return None
-
 
 #### Stage 2: Payment;
 #Bank -> User
@@ -117,24 +105,47 @@ def request_proof_of_payment(creddef_id = None):
     return ob.send_proof_request(req)
 
 
+##### PROOF PACKAGE AT SHIPPING SERVICE ######
+
+def propose_proof_of_dispatch(connection_id, cred_def_id=None):
+    proposal = build_proof_proposal(
+        "proof_of_dispatch"
+    ).withAttribute(
+        "package_no",
+        cred_def_id,
+    ).withAttribute(
+        "timestamp",
+        cred_def_id
+    ).build(connection_id, comment="Package is at shipping service")
+    return ob.send_proof_proposal(proposal)
+
+#Vendor -> User
+def request_proof_of_dispatch(creddef_id = None):
+
+    if not creddef_id:
+        if not config.payment_creddef:
+            return {"error": "no creddef id"}
+        else:
+            creddef_id = config.agent_data.payment_creddef
+
+    builder = build_proof_request(name="proof of dispatch", version="1.0")
+    req = builder.withAttribute(
+        "status",
+        restrictions=[{"cred_def_id": creddef_id}]
+    ).withAttribute(
+        "timestamp",
+        restrictions=[{"cred_def_id": creddef_id}]
+    ).withAttribute(
+        "package_no",
+        restrictions=[{"cred_def_id": creddef_id}]
+    ).with_conn_id(config.agent_data.current_connection).build()
+    return ob.send_proof_request(req)
+
+
+##############################################
+
 ####END Stage 2
 ####START Stage 3: Package ownership
-def register_package_schema(url):
-    schema = {
-        "schema_name": "package_cred",
-        "schema_version": "1.0",
-        "attributes": ["package_no", "timestamp", "status", "shipper_did"]
-    }
-
-    response = ob.post(url + "/schemas", data=schema)
-    id =  response["schema_id"]
-    creddef = {"schema_id":id, "support_revocation": False}
-
-    resp = ob.register_creddef(creddef)
-    if resp:
-        config.agent_data.creddef_id = resp["credential_definition_id"]
-        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
-        return id, resp["credential_definition_id"]
 
 def send_package_cred_offer(conn_id, creddef_id):
     logging.debug("Issue credential to user")
@@ -180,7 +191,7 @@ def propose_proof_of_ownership():
 
 
 
-def request_proof_of_ownership():
+def request_proof_of_ownership(creddef_id = None):
 
     if not config.agent_data.vendor_did:
         return {
@@ -243,8 +254,6 @@ def register_schema(name, version, attrs, revocation=False):
     return id, creddef_id
 
 
-
-
 #schema reg
 def register_payment_schema(url):
     schema = {
@@ -262,22 +271,6 @@ def register_payment_schema(url):
         logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
         return id, resp["credential_definition_id"]
 
-
-def register_receipt_schema(url):
-    schema = {
-        "schema_name": "receipt_of_package",
-        "schema_version": "1.0",
-        "attributes": ["package_no", "timestamp", "status"]
-    }
-
-    response = ob.post(url + "/schemas", data=schema)
-    id = response["schema_id"]
-    creddef = {"schema_id":id, "support_revocation": False}
-    resp = ob.register_creddef(creddef)
-    if resp:
-        config.agent_data.creddef_id = resp["credential_definition_id"]
-        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
-        return id, resp["credential_definition_id"]
 
 ## need a way of keeping track who is for what
 def get_payment_creddefid():
@@ -297,5 +290,59 @@ def get_package_creddefid():
         return package_creds[0]["cred_def_id"]
 
 
+####schema registrations#####
+def register_payment_agreement_schema(url):
+    schema_name = "payment_agreement"
+    schema = {
+        "schema_name": schema_name,
+        "schema_version": "1.0",
+        "attributes": ["amount", "timestamp", "payment_endpoint"]
+    }
+    response = ob.post(url + "/schemas", data=schema)
+    id = response["schema_id"]
+    creddef = {"schema_id": id, "support_revocation": False}
+    resp = ob.register_creddef(creddef)
+    if resp:
+        config.agent_data.creddef_id = resp["credential_definition_id"]
+        config.agent_data.creddefs[schema_name] = resp["credential_definition_id"]
+        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
+        return id, resp["credential_definition_id"]
+
+def register_package_schema(url):
+    schema_name = "package_cred"
+    schema = {
+        "schema_name": schema_name,
+        "schema_version": "1.0",
+        "attributes": ["package_no", "timestamp", "status", "shipper_did"]
+    }
+
+    response = ob.post(url + "/schemas", data=schema)
+    id = response["schema_id"]
+    creddef = {"schema_id":id, "support_revocation": False}
+
+    resp = ob.register_creddef(creddef)
+    if resp:
+        config.agent_data.creddef_id = resp["credential_definition_id"]
+        config.agent_data.creddefs[schema_name] = resp["credential_definition_id"]
+        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
+        return id, resp["credential_definition_id"]
 
 
+def register_receipt_schema(url):
+    schema_name = "received_package"
+    schema = {
+        "schema_name": schema_name,
+        "schema_version": "1.0",
+        "attributes": ["status", "package_no", "timestamp"]
+    }
+
+    response = ob.post(url + "/schemas", data=schema)
+    id = response["schema_id"]
+    creddef = {"schema_id": id, "support_revocation": False}
+
+    resp = ob.register_creddef(creddef)
+    if resp:
+        config.agent_data.creddef_id = resp["credential_definition_id"]
+        config.agent_data.creddefs[schema_name] = resp["credential_definition_id"]
+        logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
+        return id, resp["credential_definition_id"]

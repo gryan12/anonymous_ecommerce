@@ -14,7 +14,10 @@ DIDs and required schemas and creddefs
 
 	Credential proposal for payment information
 	    If item available:
-		    protocol for credential issue
+		    Credential offer
+		    Credential request
+		    Credential issuance
+
 		else:
 		     problem report
 
@@ -43,6 +46,10 @@ DIDs and required schemas and creddefs
     ----- Current Uncertainty: Specifics of interaction details between the Vendor and the Shipper. ------
     ----- How a vendor informs a shipping service that they have received a parcel in particlar ------
 9. The Vendor packages the users goods, and issues them a credential for package ownership. The vendor ships the package to the shipping service.
+        Aries protocol:
+        credential offer
+        credential request
+        credential issuance
 
     --cool idea---
 10. Perhaps through a QR invite code present on the package itself, the shipping service initiates connection with the vendor, and issues credential that they are in possession
@@ -86,3 +93,11 @@ DIDs and required schemas and creddefs
 
 
 
+CRED EXCHANGE START POINTS:
+
+1. Payment request: Crendetial proposal [User->Vendor]
+2. Payment credential: Credential offer [Bankl->User]
+3. Payment proof: Proof proposal [User->Vendor]
+4. Package credntial: Credential offer [Vendor->User]
+5. Receipt credential: Credential offer [Shipper->Bank]
+6.

@@ -15,6 +15,8 @@ class Data:
         self.bank_did = None
         self.shipper_did = None
         self.vendor_did = None
+        ##dict of schema names to their creddef ids
+        self.creddefs = {}
 
 def setup():
     global agent_data

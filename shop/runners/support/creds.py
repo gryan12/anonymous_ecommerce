@@ -101,7 +101,8 @@ class CredBuilder:
         return req
 
 
-def build_credential_proposal(self,
+def build_credential_proposal(
+                   connection_id,
                    comment="",
                    prop_schema=None,
                    schema_name=None,
@@ -113,6 +114,7 @@ def build_credential_proposal(self,
     proposal = {
         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.1/propose-credential",
         "comment": comment,
+        "connection_id": connection_id,
     }
 
     if schema_version:
@@ -125,6 +127,8 @@ def build_credential_proposal(self,
         proposal["schema_name"] = schema_name
     if prop_schema:
         proposal["credential_proposal"] = prop_schema
+
+    return proposal
 
 
 ###PROOF BUILDERS###

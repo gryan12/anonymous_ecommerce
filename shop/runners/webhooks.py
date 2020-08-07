@@ -51,16 +51,19 @@ def messages():
 
 @webhooks.route("/webhooks/topic/issue_credential/", methods=["POST"])
 def issue_cred():
-    logging.debug("Received cred msg")
     data = json.loads(request.data)
     state = data["state"]
-    initiator = data["initiator"]
-    creddef_id = data["credential_definition_id"]
-    credex_id = data["credential_exchange_id"]
-    logging.debug("...with state: %s, intitiator: %s, and id: %s", state, initiator, credex_id)
+    logging.debug("issue cred with state: %s", state)
 
-    if state == "request_received":
-        cred_preview = config.agent_data.previews[creddef_id]
+    if state == "proposal_received":
+        logging.debug("proposal received")
+        ##proposal of payment agreement
+        if config.role == "flaskvendor":
+            logging.debug("proposal received as vendor")
+            trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"])
+
+    elif state == "request_received":
+        cred_preview = config.agent_data.previews[data["credential_definition_id"]]
         if config.agent_data.agent_role == "flaskvendor":
             cred = {
                 "comment": "issuance of payment credential",
@@ -71,15 +74,15 @@ def issue_cred():
                 "comment": "issuance of package credential",
                 "credential_preview": cred_preview
             }
-        resp = ob.issue_credential(credex_id, cred)
+        resp = ob.issue_credential(data["credential_exchange_id"], cred)
 
     elif state == "offer_received":
-        ob.send_cred_request(credex_id)
+        ob.send_cred_request(data["credential_exchange_id"])
 
     elif state == "credential_received":
         config.agent_data.credentials.append(
             {
-                data["connection_id"]: creddef_id
+                data["connection_id"]: data["credential_definition_id"]
             }
         )
 
@@ -100,12 +103,18 @@ def present_proof():
     if state == "proposal_received":
         proposal = data["presentation_proposal_dict"]["presentation_proposal"]
         print(proposal)
+
         creddef_id = proposal["attributes"][0]["cred_def_id"]
+
         logging.debug("received proposal for proof presentation: ")
+
         if config.role == "flaskvendor":
-            print("config role: ", config.role)
             logging.debug("... at vendor")
             trans.request_proof_of_payment(creddef_id)
+
+        elif config.role =="flaskuser":
+            logging.debug("requesting proof of package dispatch")
+            trans.request_proof_of_dispatch(creddef_id)
 
     elif state == "presentation_received":
         logging.debug("received user proof presentation")
