@@ -34,6 +34,15 @@
   <div class="container">
       <div class="col-sm-4">
           <h3><u>Actions</u></h3>
+          {% if name == "flaskvendor" %}
+          <button class="btn btn-primary" id="propose_dispatch" onclick="proposeProofOfDispatch()">Propose Proof of Purchase </button>
+          {% endif %}
+          {% if name == "flaskshipper" %}
+          {% endif %}
+          {% if name == "flaskuser" %}
+          <button class="btn btn-primary" id="propose_proof_payment" onclick="proposeProofOfPayment()">Propose Proof of Purchase </button>
+          <button class="btn btn-primary" id="propose_proof_payment_agreement" onclick="proposeProofOfPaymentAgreement()"> Make Payment </button>
+          {% endif %}
           <button class="btn btn-primary" id="issue_proof" onclick="requestProof()">
               {% if name == "flaskvendor" %}
               Request Proof of Payment

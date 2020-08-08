@@ -147,6 +147,15 @@ def register_creddef(creddef):
     req_url = AGENT_URL + "/credential-definitions"
     return post(req_url, creddef)
 
+def get_schema(schema_id):
+    req_url = AGENT_URL + f"/schemas/{schema_id}"
+    return get(req_url)
+
+def get_creddef(creddef):
+    req_url = AGENT_URL + f"/credential-definitions/{creddef}"
+    return get(req_url)
+
+
 
 def get_public_did():
     req_url = AGENT_URL + "/wallet/did/public"

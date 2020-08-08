@@ -84,7 +84,6 @@ def received_package():
 
     if not hasActiveConnection():
         return make_response({"code": "failure", "reason": "no active connections"})
-
     if config.role != "flaskshipper":
         make_response({"code": "not avialable for this agent"}, 500)
 
@@ -93,10 +92,25 @@ def received_package():
 
     return make_response({"code": "received"})
 
+@app.route("/shop/dispatch/", methods=["GET"])
+def ready_for_dispatch():
+    if not hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+
+    ##propose proof of payment
+    if config.role != "flaskvendor":
+        return make_response({"code":"action unavailable for this demo agent"}, 500)
+
+    logging.debug("proposing proof of package status")
+    dispatch_creddef = trans.get_creddefid("received_package")
+    if not dispatch_creddef:
+        return make_response({"code": "Do not have correct credential"})
+
+    trans.propose_proof_of_dispatch(config.agent_data.current_connection, dispatch_creddef)
+
+    return make_response({"code": "received"})
 
 ##================================================================
-
-
 ##### START interface routes
 @app.route("/home/", methods=["GET"])
 def render_interface():
@@ -348,13 +362,23 @@ def get_genesis_text(ledger_url):
         pass
 
 def register_did(ledger_url, seed=None, alias=None, role="TRUST_ANCHOR"):
+
     content = {
         "seed": seed,
         "alias": alias,
         "role": role,
     }
+
     response = requests.post(ledger_url + "/register", data=json.dumps(content))
+
     config.agent_data.has_public = True
+
+    try:
+        resp = json.loads(response.text)
+    except json.JSONDecodeError as e:
+        print(response.headers)
+        logging.debug("ERROR REGISTERING DID WITH THE LEDGER")
+        sys.exit(-1)
     return json.loads(response.text)
 
 

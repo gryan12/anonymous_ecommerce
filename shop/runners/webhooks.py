@@ -113,13 +113,24 @@ def present_proof():
         proposal = data["presentation_proposal_dict"]["presentation_proposal"]
         print(proposal)
 
-        creddef_id = proposal["attributes"][0]["cred_def_id"]
+        creddef_id = None
+        try:
+            creddef_id = proposal["attributes"][0]["cred_def_id"]
+            logging.debug("received proposal for proof presentation: ")
+        except Exception as e:
+            print(e)
+            return False
 
-        logging.debug("received proposal for proof presentation: ")
+        schema_name = trans.get_schema_name(creddef_id)
+        if schema_name == "received_package":
+            trans.request_proof_of_dispatch(creddef_id)
 
         if config.role == "flaskvendor":
             logging.debug("... at vendor")
-            trans.request_proof_of_payment(creddef_id)
+            if schema_name:
+                if schema_name == "payment_credential":
+                    trans.request_proof_of_payment(creddef_id)
+
 
         elif config.role =="flaskuser":
             logging.debug("requesting proof of package dispatch")
