@@ -62,8 +62,14 @@ def issue_cred():
             logging.debug("proposal received as vendor")
             trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"])
 
+
+    elif state == "offer_received":
+        ob.send_cred_request(data["credential_exchange_id"])
+
     elif state == "request_received":
+
         cred_preview = config.agent_data.previews[data["credential_definition_id"]]
+
         if config.agent_data.agent_role == "flaskvendor":
             cred = {
                 "comment": "issuance of payment credential",
@@ -74,10 +80,13 @@ def issue_cred():
                 "comment": "issuance of package credential",
                 "credential_preview": cred_preview
             }
+        elif config.agent_data.agent_role == "flaskshipper":
+            cred = {
+                "comment": "cred offer",
+                "credential_preview": cred_preview
+            }
         resp = ob.issue_credential(data["credential_exchange_id"], cred)
 
-    elif state == "offer_received":
-        ob.send_cred_request(data["credential_exchange_id"])
 
     elif state == "credential_received":
         config.agent_data.credentials.append(
@@ -115,6 +124,10 @@ def present_proof():
         elif config.role =="flaskuser":
             logging.debug("requesting proof of package dispatch")
             trans.request_proof_of_dispatch(creddef_id)
+
+        elif config.role =="flaskbank":
+            logging.debug("requesting proof of payment agreement")
+            trans.request_proof_of_payment_agreement(creddef_id)
 
     elif state == "presentation_received":
         logging.debug("received user proof presentation")

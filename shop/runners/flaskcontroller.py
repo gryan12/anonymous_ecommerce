@@ -35,9 +35,23 @@ def prop_proof():
     if config.role == "flaskuser":
         logging.debug("proposing proof of payment")
         payment_creddef = trans.get_payment_creddefid()
+        if not payment_creddef:
+            return make_response({"code": "Do not have correct credential"})
+
         trans.propose_proof_of_payment(config.agent_data.current_connection, payment_creddef)
 
     return make_response({"code": "received"})
+
+@app.route("/payment/propose_proof/", methods=["GET"])
+def prop_agree_proof():
+    if not hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+
+    logging.debug("proposing proof of purchase agreement")
+    agreement_creddef = trans.get_creddefid("payment_agreement")
+    trans.propose_proof_of_payment_agreement(config.agent_data.current_connection, agreement_creddef)
+    return make_response({"code": "received"})
+
 
 @app.route("/credentials/propose/", methods=["GET"])
 def prop_cred():
@@ -74,7 +88,8 @@ def received_package():
     if config.role != "flaskshipper":
         make_response({"code": "not avialable for this agent"}, 500)
 
-    trans.send_package_receipt_cred_offer(config.agent_data.current_connection)
+    creddef_id = config.agent_data.creddefs["received_package"]
+    trans.send_package_receipt_cred_offer(config.agent_data.current_connection, creddef_id)
 
     return make_response({"code": "received"})
 
@@ -442,6 +457,9 @@ def main():
 
     if agent_role == "flaskbank":
         trans.register_payment_schema(agent_url)
+
+    if agent_role == "flaskshipper":
+        trans.register_receipt_schema(agent_url)
 
     elif agent_role == "flaskvendor":
         trans.register_package_schema(agent_url)

@@ -49,6 +49,36 @@ def refuse_payment_agreement(conn_id, creddef_id):
     #todo: return a problem report if vendor cant/wont sell
     return None
 
+def propose_proof_of_payment_agreement(connection_id, cred_def_id):
+    proposal = build_proof_proposal(
+        "proof_of_payment_agreement"
+    ).withAttribute(
+        "payment_endpoint",
+        cred_def_id,
+    ).withAttribute(
+        "amount",
+        cred_def_id
+    ).withAttribute(
+        "timestamp",
+        cred_def_id
+    ).build(connection_id, comment="proof of payment agreement")
+    return ob.send_proof_proposal(proposal)
+
+
+def request_proof_of_payment_agreement(creddef_id = None):
+    if not creddef_id:
+        return {"error": "no creddef id"}
+
+    builder = build_proof_request(name="proof of payment agreement", version="1.0")
+    req = builder.withAttribute(
+        "payment_endpoint",
+        restrictions=[{"cred_def_id": creddef_id}]
+    ).withAttribute(
+        "timestamp",
+        restrictions=[{"cred_def_id": creddef_id}]
+    ).with_conn_id(config.agent_data.current_connection).build()
+    return ob.send_proof_request(req)
+
 #### Stage 2: Payment;
 #Bank -> User
 def send_payment_cred_offer(conn_id, creddef_id):
@@ -211,9 +241,7 @@ def request_proof_of_ownership(creddef_id = None):
     return ob.send_proof_request(req)
 
 ####END Stage 3
-
 ####START Stage 4: receipt of package
-
 def send_package_receipt_cred_offer(conn_id, creddef_id):
     logging.debug("Issue receipt credential to vendor")
     builder = build_cred(creddef_id)
@@ -223,6 +251,7 @@ def send_package_receipt_cred_offer(conn_id, creddef_id):
         .with_conn_id(conn_id)
 
     offer_req = builder.build_offer("package-receipt credential issuance")
+    print(offer_req)
     config.agent_data.previews[creddef_id] = builder.build_preview()
     return ob.send_cred_offer(offer_req)
 
@@ -273,6 +302,28 @@ def register_payment_schema(url):
 
 
 ## need a way of keeping track who is for what
+def get_agreement_creddefid():
+    credentials = ob.get_credentials()
+    res = credentials["results"]
+    print("results of payment credf: ", res)
+    payment_creds = [x for x in res if "payment_agreement" in x["schema_id"]]
+    print("payment creds", res)
+    if payment_creds:
+        return payment_creds[0]["cred_def_id"]
+    else:
+        return None
+
+def get_creddefid(schema_name):
+    credentials = ob.get_credentials()
+    res = credentials["results"]
+    print("results of payment credf: ", res)
+    payment_creds = [x for x in res if schema_name in x["schema_id"]]
+    print("payment creds", res)
+    if payment_creds:
+        return payment_creds[0]["cred_def_id"]
+
+
+
 def get_payment_creddefid():
     credentials = ob.get_credentials()
     res = credentials["results"]
@@ -333,7 +384,7 @@ def register_receipt_schema(url):
     schema = {
         "schema_name": schema_name,
         "schema_version": "1.0",
-        "attributes": ["status", "package_no", "timestamp"]
+        "attributes": ["package_no", "timestamp"]
     }
 
     response = ob.post(url + "/schemas", data=schema)

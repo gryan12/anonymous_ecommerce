@@ -23,10 +23,9 @@ DIDs and required schemas and creddefs
 
 5. The User, proves to the payment service that the given payment endpoint is expecting the given amount of funds. Could be potentially useful for any potential implementations of conflict resoluiton.
         Aries protocol:
-            Credential proposal
-            Credential offer
-            Credential req
-            Credentual issueance
+            Proof proposal
+            Proof request
+            Proof proposal
 
 6. Through the payment service, the user pays the required amount to the vendor.
 
