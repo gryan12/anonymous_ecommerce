@@ -26,7 +26,7 @@ app.register_blueprint(webhooks)
 #Call to propose for a proof.
 #If the user agent, then proposing proof of payment OR
 #proposing proof of
-@app.route("/propose_proof/", methods=["GET"])
+@app.route("/payment/propose_proof/", methods=["GET"])
 def prop_proof():
     if not hasActiveConnection():
         return make_response({"code": "failure", "reason": "no active connections"})
@@ -42,7 +42,7 @@ def prop_proof():
 
     return make_response({"code": "received"})
 
-@app.route("/payment/propose_proof/", methods=["GET"])
+@app.route("/payment/propose_proof/agreement", methods=["GET"])
 def prop_agree_proof():
     if not hasActiveConnection():
         return make_response({"code": "failure", "reason": "no active connections"})
@@ -50,6 +50,16 @@ def prop_agree_proof():
     logging.debug("proposing proof of purchase agreement")
     agreement_creddef = trans.get_creddefid("payment_agreement")
     trans.propose_proof_of_payment_agreement(config.agent_data.current_connection, agreement_creddef)
+    return make_response({"code": "received"})
+
+@app.route("/shop/dispatch/propose_proof/ownership", methods=["GET"])
+def prop_prove_ownership():
+    if not hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+
+    logging.debug("proposing proof of package ownership")
+    ownership_creddef = trans.get_creddefid("package_cred")
+    trans.propose_proof_of_ownership(config.agent_data.current_connection, ownership_creddef)
     return make_response({"code": "received"})
 
 
@@ -336,7 +346,11 @@ def issue_credreq():
 
     elif role == "flaskvendor":
         logging.debug("MAJOR STAGE 4: ISSUEING PACKAGE CRED")
-        trans.send_package_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
+        trans.send_package_cred_offer(config.agent_data.current_connection, config.agent_data.creddefs["package_cred"])
+
+    elif role == "flaskshipper":
+        logging.debug("MAJOR STAGE 4: ISSUEING PACKAGE CRED")
+        trans.send_package_receipt_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
 
     return make_response({"code":"success", "role": role}, 200)
 

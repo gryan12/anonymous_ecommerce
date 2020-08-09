@@ -56,7 +56,7 @@ def issue_cred():
     logging.debug("issue cred with state: %s", state)
 
     if state == "proposal_received":
-        logging.debug("proposal received")
+        logging.debug("proposal eceived")
         ##proposal of payment agreement
         if config.role == "flaskvendor":
             logging.debug("proposal received as vendor")
@@ -113,10 +113,9 @@ def present_proof():
         proposal = data["presentation_proposal_dict"]["presentation_proposal"]
         print(proposal)
 
-        creddef_id = None
         try:
             creddef_id = proposal["attributes"][0]["cred_def_id"]
-            logging.debug("received proposal for proof presentation: ")
+            logging.debug("received proposal for proof presentation: with id: %s", creddef_id)
         except Exception as e:
             print(e)
             return False
@@ -124,6 +123,9 @@ def present_proof():
         schema_name = trans.get_schema_name(creddef_id)
         if schema_name == "received_package":
             trans.request_proof_of_dispatch(creddef_id)
+
+        elif schema_name == "package_cred":
+            trans.request_proof_of_ownership(creddef_id)
 
         if config.role == "flaskvendor":
             logging.debug("... at vendor")
@@ -192,7 +194,8 @@ def present_proof():
 @webhooks.route("/webhooks/topic/problem_report/", methods=["POST"])
 def handle_problem():
     data = json.loads(request.data)
-    logging.debug("received erorr message : %s", data["content"])
+    print(request.headers)
+    print(request.data)
     return make_response(json.dumps({"code": "success"}), 200)
 
 @webhooks.route("/webhooks/topic/<topicname>/", methods=["POST", "GET"])

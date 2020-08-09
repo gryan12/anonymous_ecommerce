@@ -174,24 +174,30 @@ def request_proof_of_dispatch(creddef_id = None):
 ####END Stage 2
 ####START Stage 3: Package ownership
 
+
+def offer_credential(offer, preview, creddef_id):
+    config.agent_data.previews[creddef_id] = preview
+    config.agent_data.creddef_id = creddef_id
+    return ob.send_cred_offer(offer)
+
+def propose_crential(proposition):
+    return None
+
+def propose_proof(proposition):
+    return None
+
+def request_proof(request):
+    return None
+
+
 def send_package_cred_offer(conn_id, creddef_id):
     logging.debug("Issue credential to user")
 
-    if not config.agent_data.shipper_did:
-        logging.debug("shipper did not set")
-
-        return {"error": "did not set"}
-    else:
-        shipper_did = config.agent_data.shipper_did
-
-    logging.debug("shipper did is: %s", shipper_did)
     builder = build_cred(creddef_id)
-
 
     builder.with_attribute({"package_no": "asdf1234"}) \
         .with_attribute({"timestamp": str(int(time.time()))}) \
-        .with_attribute({"shipper_did": shipper_did}) \
-        .with_attribute({"status": "at_shipping-service"}) \
+        .with_attribute({"status": "dispatched_to_shipping_service"}) \
         .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
         .with_conn_id(conn_id)
 
@@ -200,40 +206,27 @@ def send_package_cred_offer(conn_id, creddef_id):
     return ob.send_cred_offer(offer_req)
 
 
-def propose_proof_of_ownership():
-    if not config.agent_data.vendor_did:
-        return {
-            "error": "vendor did not known"
-        }
-    else:
-        vendor_did = config.agent_data.vendor_did
-
+def propose_proof_of_ownership(conn_id, creddef_id):
     builder = build_proof_proposal(name="proof of package ownership")
     req = builder.withAttribute(
         "package_no",
+        creddef_id
     ).withAttribute(
         "timestamp",
-    ).build(config.agent_data.current_connection)
-    return ob.send_proof_request(req, comment="wanna prove package ownership")
+        creddef_id
+    ).build(conn_id, comment="proof of package ownership")
+    return ob.send_proof_proposal(req)
 
 
 
-def request_proof_of_ownership(creddef_id = None):
-
-    if not config.agent_data.vendor_did:
-        return {
-            "error": "vendor did not known"
-        }
-    else:
-        vendor_did = config.agent_data.vendor_did
-
+def request_proof_of_ownership(creddef_id):
     builder = build_proof_request(name="proof of package ownership", version="1.0")
     req = builder.withAttribute(
         "package_no",
-        restrictions=[{"issuer_did":vendor_did}]
+        restrictions=[{"cred_def_id": creddef_id}]
     ).withAttribute(
         "timestamp",
-        restrictions=[{"issuer_did":vendor_did}]
+        restrictions=[{"cred_def_id": creddef_id}]
     ).with_conn_id(config.agent_data.current_connection).build()
     return ob.send_proof_request(req)
 
@@ -248,7 +241,6 @@ def send_package_receipt_cred_offer(conn_id, creddef_id):
         .with_conn_id(conn_id)
 
     offer_req = builder.build_offer("package-receipt credential issuance")
-    print(offer_req)
     config.agent_data.previews[creddef_id] = builder.build_preview()
     return ob.send_cred_offer(offer_req)
 
@@ -289,8 +281,6 @@ def register_schema(name, version, attrs, revocation=False):
     creddef_id = resp["credential_definition_id"]
     config.agent_data.creddef_id = creddef_id
     return id, creddef_id
-
-
 
 
 ## need a way of keeping track who is for what
@@ -373,7 +363,7 @@ def register_package_schema(url):
     schema = {
         "schema_name": schema_name,
         "schema_version": "1.0",
-        "attributes": ["package_no", "timestamp", "status", "shipper_did"]
+        "attributes": ["package_no", "timestamp", "status"]
     }
 
     response = ob.post(url + "/schemas", data=schema)

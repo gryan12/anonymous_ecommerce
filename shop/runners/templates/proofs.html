@@ -35,13 +35,14 @@
       <div class="col-sm-4">
           <h3><u>Actions</u></h3>
           {% if name == "flaskvendor" %}
-          <button class="btn btn-primary" id="propose_dispatch" onclick="proposeProofOfDispatch()">Propose Proof of Purchase </button>
+          <button class="btn btn-primary" id="propose_dispatch" onclick="proposeProofOfDispatch()">Propose Proof of Dispatch </button>
           {% endif %}
           {% if name == "flaskshipper" %}
           {% endif %}
           {% if name == "flaskuser" %}
           <button class="btn btn-primary" id="propose_proof_payment" onclick="proposeProofOfPayment()">Propose Proof of Purchase </button>
-          <button class="btn btn-primary" id="propose_proof_payment_agreement" onclick="proposeProofOfPaymentAgreement()"> Make Payment </button>
+          <button class="btn btn-primary" id="propose_proof_payment_agreement" onclick="proposeProofOfPaymentAgreement()"> Make payment (Proof of agreement) </button>
+          <button class="btn btn-primary" id="propose_proof_of_ownership" onclick="proposeProofOfOwnership()"> Propose proof of ownership</button>
           {% endif %}
           <button class="btn btn-primary" id="issue_proof" onclick="requestProof()">
               {% if name == "flaskvendor" %}
@@ -86,7 +87,7 @@
   </script>
 
 
-    <script>
+<script>
  function requestProof() {
    var xhttp = new XMLHttpRequest();
    xhttp.onreadystatechange = function() {
@@ -98,6 +99,54 @@
    xhttp.send();
  }
 </script>
+<script>
+ function proposeProofOfPayment() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+        location.reload(true)
+     }
+   };
+   xhttp.open("GET", "/payment/propose_proof/", true);
+   xhttp.send();
+ }
+</script>
+    <script>
+ function proposeProofOfPaymentAgreement() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+        location.reload(true)
+     }
+   };
+   xhttp.open("GET", "/payment/propose_proof/agreement", true);
+   xhttp.send();
+ }
+</script>
+
+<script>
+ function proposeProofOfDispatch() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+        location.reload(true)
+     }
+   };
+   xhttp.open("GET", "/shop/dispatch", true);
+   xhttp.send();
+ }
+</script>
+<script>
+ function proposeProofOfOwnership() {
+   var xhttp = new XMLHttpRequest();
+   xhttp.onreadystatechange = function() {
+     if (this.readyState == 4 && this.status == 200) {
+        location.reload(true)
+     }
+   };
+   xhttp.open("GET", "/shop/dispatch/propose_proof/ownership", true);
+   xhttp.send();
+ }
+</script>
 </body>
 </html>
-
