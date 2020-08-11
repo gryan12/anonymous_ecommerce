@@ -174,3 +174,20 @@ def get_public_did():
 def get_connection_details(conn_id):
     req_url = AGENT_URL + f"/connections/{conn_id}"
     return get(req_url)
+
+
+def hasActiveConnection():
+    resp = get_connections()
+
+    if not resp:
+        return False
+
+    states = [
+        x['state'] for x in resp['results']
+    ]
+
+    for state in states:
+        if state == 'active':
+            logging.debug("true")
+            return True
+    return False

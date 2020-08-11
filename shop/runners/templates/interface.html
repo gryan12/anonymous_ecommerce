@@ -64,7 +64,7 @@
                     Actions
                 </h3>
                 {% if name != "flaskuser" %}
-                <Button id = "inv_but" onclick="createInvite()" value="proofbutton">Create Invite</Button>
+                <Button id = "inv_but" onclick="createInvite()" value="invButton">Create Invite</Button>
                 {% endif %}
                 <Button id = "status" onclick="getStatus()" value="statusButton">Get Server Status</Button>
             </div>
@@ -72,7 +72,7 @@
                 <h3>
                     Paste invitation JSON:
                 </h3>
-                <form action="/receive_invite" id="invForm"  name=inviteForm method="post" enctype="multipart/form-data">
+                <form action="/connections/receive_invite" id="invForm"  name=inviteForm method="post" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="invite_area">Paste Invite JSON</label>
                         <input class="form-control input-lg" id="invite_area" name="invite">
@@ -115,48 +115,7 @@
        "<h3> Invite Details: <br>" + this.responseText + "</h3>";
      }
    };
-   xhttp.open("GET", "/create_invite", true);
-   xhttp.send();
- }
-</script>
-
-<script>
- function getConnections() {
-   var xhttp = new XMLHttpRequest();
-   xhttp.onreadystatechange = function() {
-     if (this.readyState == 4 && this.status == 200) {
-       document.getElementById("demo").innerHTML =
-       this.responseText;
-     }
-   };
-   xhttp.open("GET", "/get_connections", true);
-   xhttp.send();
- }
-</script>
-
-<script>
- function getActiveConnections() {
-   var xhttp = new XMLHttpRequest();
-   xhttp.onreadystatechange = function() {
-     if (this.readyState == 4 && this.status == 200) {
-       document.getElementById("demo").innerHTML =
-       this.responseText;
-     }
-   };
-   xhttp.open("GET", "/get_active_connections", true);
-   xhttp.send();
- }
-</script>
-<script>
- function requestProof() {
-   var xhttp = new XMLHttpRequest();
-   xhttp.onreadystatechange = function() {
-     if (this.readyState == 4 && this.status == 200) {
-       document.getElementById("demo").innerHTML =
-       this.responseText;
-     }
-   };
-   xhttp.open("GET", "/request_proof", true);
+   xhttp.open("GET", "/connections/create_invite", true);
    xhttp.send();
  }
 </script>

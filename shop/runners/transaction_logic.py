@@ -112,17 +112,11 @@ def propose_proof_of_payment(connection_id, cred_def_id=None):
 #Vendor -> User
 def request_proof_of_payment(creddef_id = None):
 
-   # if not config.agent_data.bank_did:
-   #     return {"error": "did not set"}
-   # else:
-   #     bank_did = config.agent_data.bank_did
-
     if not creddef_id:
-        if not config.payment_creddef:
+        if not config.agent_data.payment_creddef:
             return {"error": "no creddef id"}
         else:
             creddef_id = config.agent_data.payment_creddef
-
 
     builder = build_proof_request(name="proof of payment", version="1.0")
     req = builder.withAttribute(
@@ -210,13 +204,12 @@ def propose_proof_of_ownership(conn_id, creddef_id):
     builder = build_proof_proposal(name="proof of package ownership")
     req = builder.withAttribute(
         "package_no",
-        creddef_id
+        cred_def_id=creddef_id
     ).withAttribute(
         "timestamp",
-        creddef_id
+        cred_def_id=creddef_id
     ).build(conn_id, comment="proof of package ownership")
     return ob.send_proof_proposal(req)
-
 
 
 def request_proof_of_ownership(creddef_id):

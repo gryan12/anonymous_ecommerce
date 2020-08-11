@@ -65,7 +65,7 @@
 
     <script>
     $(document).ready(function(){
-    $.ajax({ url: "/home/proofs/history",
+    $.ajax({ url: "/proofs/history",
         context: document.body,
         dataType:'json',
         success: function(response){
@@ -107,7 +107,7 @@
         location.reload(true)
      }
    };
-   xhttp.open("GET", "/payment/propose_proof/", true);
+   xhttp.open("GET", "/proofs/payment/propose_proof/", true);
    xhttp.send();
  }
 </script>
@@ -119,7 +119,7 @@
         location.reload(true)
      }
    };
-   xhttp.open("GET", "/payment/propose_proof/agreement", true);
+   xhttp.open("GET", "/proofs/payment/propose_proof/agreement", true);
    xhttp.send();
  }
 </script>
@@ -132,7 +132,7 @@
         location.reload(true)
      }
    };
-   xhttp.open("GET", "/shop/dispatch", true);
+   xhttp.open("GET", "/proofs/shop/dispatch", true);
    xhttp.send();
  }
 </script>
@@ -144,7 +144,7 @@
         location.reload(true)
      }
    };
-   xhttp.open("GET", "/shop/dispatch/propose_proof/ownership", true);
+   xhttp.open("GET", "/proofs/shop/dispatch/propose_proof/ownership", true);
    xhttp.send();
  }
 </script>

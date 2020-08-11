@@ -8,35 +8,32 @@ AGENT="$1"
 EXT_LEDGER="$2"
 
 if [ $# -eq 1 ];  then
-  echo "Using local development ledger"
-  LEDGER_URL="http://${DOCKERHOST}:9000"
-else
   LEDGER_URL="http://greenlight.bcovrin.vonx.io"
   echo "using public BCGov test network"
+else
+  echo "Using local development ledger"
+  LEDGER_URL="http://${DOCKERHOST}:9000"
 fi
 
 shift
 
-ARGS=""
 DOCKER_NET="bridge"
-
-ARGS="${ARGS:+$ARGS }$i"
-if [ "$AGENT" = flaskbank"" ]; then
+if [ "$AGENT" = "flaskbank" ]; then
   AGENT_MODULE="flaskbank"
   AGENT_PORT=7030
-  AGENT_PORT_RANGE=7040-7047
+  AGENT_PORT_RANGE=7030-7033
 elif [ "$AGENT" = "flaskvendor" ]; then
   AGENT_MODULE="flaskvendor"
   AGENT_PORT=7040
-  AGENT_PORT_RANGE=7040-7048
+  AGENT_PORT_RANGE=7040-7043
 elif [ "$AGENT" = "flaskshipper" ]; then
   AGENT_MODULE="flaskshipper"
   AGENT_PORT=7050
-  AGENT_PORT_RANGE=7050-7058
+  AGENT_PORT_RANGE=7050-7053
 elif [ "$AGENT" = "flaskuser" ]; then
   AGENT_MODULE="flaskuser"
   AGENT_PORT=7060
-  AGENT_PORT_RANGE=7050-7058
+  AGENT_PORT_RANGE=7060-7063
 else
   exit 1
 fi
@@ -49,7 +46,7 @@ if [ ! -z "$DOCKERHOST" ]; then
   echo "1"
 elif [ -z "${PWD_HOST_FQDN}" ]; then
   DOCKERHOST=`docker run --rm --net=host eclipse/che-ip`
-  echo "1"
+  echo "2"
   export RUNMODE="docker"
 fi
 
@@ -76,4 +73,4 @@ $DOCKER run --name $AGENT --rm -it ${DOCKER_OPTS} \
   -p 0.0.0.0:$AGENT_PORT_RANGE:$AGENT_PORT_RANGE \
   -v "/$(pwd)/../logs:/home/indy/logs" \
   $DOCKER_ENV \
-  transaction-demo $AGENT_MODULE --port $AGENT_PORT $ARGS
+  transaction-demo $AGENT_MODULE --port $AGENT_PORT

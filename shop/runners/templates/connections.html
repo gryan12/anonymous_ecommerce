@@ -62,7 +62,7 @@
 
     <script>
     $(document).ready(function(){
-    $.ajax({ url: "/get_connections",
+    $.ajax({ url: "/connections/get_connections",
         context: document.body,
         dataType: 'json',
         success: function(response){
@@ -83,7 +83,7 @@
 
 <script>
     $(document).ready(function(){
-    $.ajax({ url: "/get_active_connections",
+    $.ajax({ url: "/connections/get_active_connections",
         context: document.body,
         dataType: 'json',
         success: function(response){

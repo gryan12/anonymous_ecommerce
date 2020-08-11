@@ -118,7 +118,7 @@ def present_proof():
             logging.debug("received proposal for proof presentation: with id: %s", creddef_id)
         except Exception as e:
             print(e)
-            return False
+            return make_response({"code":"error verifying credenial"})
 
         schema_name = trans.get_schema_name(creddef_id)
         if schema_name == "received_package":
