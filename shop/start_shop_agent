@@ -5,19 +5,26 @@ shopt -s nocasematch
 cd $(dirname $0)
 
 AGENT="$1"
-shift
-ARGS=""
+EXT_LEDGER="$2"
 
-if [ -z "$DOCKER_NET" ]; then
-  DOCKER_NET="bridge"
+if [ $# -eq 1 ];  then
+  echo "Using local development ledger"
+  LEDGER_URL="http://${DOCKERHOST}:9000"
+else
+  LEDGER_URL="http://greenlight.bcovrin.vonx.io"
+  echo "using public BCGov test network"
 fi
 
-ARGS="${ARGS:+$ARGS }$i"
+shift
 
+ARGS=""
+DOCKER_NET="bridge"
+
+ARGS="${ARGS:+$ARGS }$i"
 if [ "$AGENT" = flaskbank"" ]; then
   AGENT_MODULE="flaskbank"
-  AGENT_PORT=5040
-  AGENT_PORT_RANGE=5040-5047
+  AGENT_PORT=7030
+  AGENT_PORT_RANGE=7040-7047
 elif [ "$AGENT" = "flaskvendor" ]; then
   AGENT_MODULE="flaskvendor"
   AGENT_PORT=7040
@@ -28,37 +35,36 @@ elif [ "$AGENT" = "flaskshipper" ]; then
   AGENT_PORT_RANGE=7050-7058
 elif [ "$AGENT" = "flaskuser" ]; then
   AGENT_MODULE="flaskuser"
-  AGENT_PORT=9050
-  AGENT_PORT_RANGE=9050-9058
+  AGENT_PORT=7060
+  AGENT_PORT_RANGE=7050-7058
 else
   exit 1
 fi
 
-echo "Preparing agent image..."
 docker build -q -t transaction-demo -f ../docker/Dockerfile.shop .. || exit 1
+
 
 if [ ! -z "$DOCKERHOST" ]; then
   export RUNMODE="docker"
   echo "1"
 elif [ -z "${PWD_HOST_FQDN}" ]; then
   DOCKERHOST=`docker run --rm --net=host eclipse/che-ip`
+  echo "1"
   export RUNMODE="docker"
 fi
 
 echo "Host is: {$DOCKERHOST}"
 
 DOCKER_ENV="-e RUNMODE=${RUNMODE} -e DOCKERHOST=${DOCKERHOST}"
-if ! [ -z "$AGENT_PORT" ]; then
-  DOCKER_ENV="${DOCKER_ENV} -e AGENT_PORT=${AGENT_PORT}"
-  DOCKER_ENV="${DOCKER_ENV} -e ROLE=${AGENT_MODULE}"
-fi
-if ! [ -z "$LEDGER_URL" ]; then
-  GENESIS_URL="${LEDGER_URL}/genesis"
-  DOCKER_ENV="${DOCKER_ENV} -e LEDGER_URL=${LEDGER_URL}"
-fi
-if ! [ -z "$GENESIS_URL" ]; then
-  DOCKER_ENV="${DOCKER_ENV} -e GENESIS_URL=${GENESIS_URL}"
-fi
+DOCKER_ENV="${DOCKER_ENV} -e AGENT_PORT=${AGENT_PORT}"
+DOCKER_ENV="${DOCKER_ENV} -e ROLE=${AGENT_MODULE}"
+
+
+echo "LEDGER_URL: ${LEDGER_URL}"
+GENESIS_URL="${LEDGER_URL}/genesis"
+DOCKER_ENV="${DOCKER_ENV} -e LEDGER_URL=${LEDGER_URL}"
+DOCKER_ENV="${DOCKER_ENV} -e GENESIS_URL=${GENESIS_URL}"
+
 if ! [ -z "$AGENT_ENDPOINT" ]; then
   DOCKER_ENV="${DOCKER_ENV} -e AGENT_ENDPOINT=${AGENT_ENDPOINT}"
 fi

@@ -474,6 +474,10 @@ def main():
     config.agent_data.agent_role = agent_role
     host = os.getenv("DOCKERHOST")
 
+    ledger_url = os.getenv("LEDGER_URL")
+    if not ledger_url:
+        ledger_url = "http://" + host + ":9000"
+
     logging.debug("Init controller with role: %s, listenting on port: %s", agent_role, str(start_port))
 
     if not start_port:
@@ -484,7 +488,7 @@ def main():
     name, seed = gen_rand_seed()
 
     if agent_role != "flaskuser":               ##the user should not be on the public ledger
-        register_did("http://" + host + ":9000", seed, agent_role)
+        register_did(ledger_url, seed, agent_role)
 
     agent_url = "http://" + host + ":" + str(start_port + 1)
     logging.debug("Agent url: %s", agent_url)
