@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script src="{{url_for('static', filename='javascript/button_funcs.js')}}"></script>
+
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">
+                    {{ name }}
+                </a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="/home">Home</a></li>
+                <li><a href="connections">Connections</a></li>
+                <li><a href="credentials">Credentials</a></li>
+                <li><a href="proofs">Proofs</a></li>
+                <li class="active"><a href="shop">Shop</a></li>
+            </ul>
+        </div>
+    </nav>
+
+  <div class="jumbotron text-center">
+    {% if name %}
+    <h1> {{ name }} Shop Demo </h1>
+    {% else %}
+    <h1> Sorry, no agent detected </h1>
+    {% endif %}
+      <p>
+          This section indicates the main steps of the transaction process that the agents' of the different parties would engage in.
+          Aim is to give an indication of the steps which would be automated vs requiring/offering user input.
+      </p>
+  </div>
+  <div class="container">
+      <div class="col-sm-4">
+          <h3><u>Demo Actions</u></h3>
+          {% if name == "flaskvendor" %}
+          <button class="btn btn-primary" id="propose_dispatch" onclick="proposeProofOfDispatch()">Propose Proof of Dispatch</button>
+          {% endif %}
+          {% if name == "flaskshipper" %}
+          <button class="btn btn-primary" onclick="offerReceiptCredential()"> Notify Seller of Package Receipt </button>
+          <button class="btn btn-primary" onclick="requestProofOfOwnership()"> Request Proof of Ownership</button>
+          {% endif %}
+          {% if name == "flaskbank" %}
+          <button class="btn btn-primary" onclick="offerPaymentCredential()"> Issue Payment Credential </button>
+          <button class="btn btn-primary" onclick="testAlert()"> Test</button>
+          {% endif %}
+          {% if name == "flaskuser" %}
+          <button class="btn btn-primary"  onclick="proposeProofOfPayment()">Purchase Item</button>
+          <button class="btn btn-primary"  onclick="proposeProofOfPaymentAgreement()">Make Payment</button>
+          <button class="btn btn-primary"  onclick="proposeProofOfOwnership()">Inform Seller of Payment Success</button>
+          <button class="btn btn-primary"  onclick="proposeProofOfOwnership()">Provide Address to Shipping Service</button>
+          {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

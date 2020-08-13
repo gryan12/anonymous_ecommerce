@@ -56,6 +56,13 @@ def render_proofs():
     name = os.getenv("ROLE")
     return render_template("proofs.html", name=name)
 
+
+@app.route("/home/shop", methods=["GET"])
+def render_shop():
+    name = os.getenv("ROLE")
+    stage = config.demo_stage
+    return render_template("shop.html", name=name)
+
 @app.route("/home/credentials", methods=["GET"])
 def render_credentials():
     name = os.getenv("ROLE")
