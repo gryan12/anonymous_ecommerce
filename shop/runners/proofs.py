@@ -64,7 +64,10 @@ def prop_proof():
 
         trans.propose_proof_of_payment(config.agent_data.current_connection, payment_creddef)
 
-    return make_response({"code": "received"})
+        return make_response({"code": "received"})
+    else:
+        return make_response({"code": "failed"}, 400)
+
 
 
 @proofs.route("/proofs/shop/dispatch/", methods=["GET"])

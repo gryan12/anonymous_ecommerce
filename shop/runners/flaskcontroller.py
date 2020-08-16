@@ -1,5 +1,4 @@
 import json
-import logging
 import requests
 import random
 from threading import Thread
@@ -24,6 +23,8 @@ app.register_blueprint(webhooks)
 app.register_blueprint(proofs)
 app.register_blueprint(connections)
 app.register_blueprint(credentials)
+
+import logging
 
 
 @app.route("/home/", methods=["GET"])
@@ -66,13 +67,10 @@ def render_shop():
 @app.route("/home/credentials", methods=["GET"])
 def render_credentials():
     name = os.getenv("ROLE")
-
-    bank_did = config.agent_data.bank_did
-    vendor_did = config.agent_data.vendor_did
-    shipper_did = config.agent_data.shipper_did
-
+#    bank_did = config.agent_data.bank_did
+#    vendor_did = config.agent_data.vendor_did
+#    shipper_did = config.agent_data.shipper_did
     this_did_res = ob.get_public_did()
-
     #todo check if
     if name == "flaskvendor":
         vendor_did = this_did_res['result']['did']
@@ -81,12 +79,13 @@ def render_credentials():
     elif name == "flaskbank":
         bank_did = this_did_res['result']['did']
 
-    return render_template("credentials.html", name=name, vendor_did=vendor_did, bank_did=bank_did, ship_did=shipper_did)
+    return render_template("credentials.html", name=name)
 
 @app.route("/status/", methods=["GET"])
 def get_status():
     status = ob.get_status()
     return make_response(json.dumps(status), 200)
+
 
 @app.route("/send_message/", methods=["POST"])
 def send_msg():
@@ -100,8 +99,61 @@ def send_msg():
     print(response)
     return make_response(json.dumps(response), 200)
 
-##### END interface routes
+@app.route("/functest/", methods=["POST"])
+def test_search():
+    inc_json = request.json
+    if inc_json["type"] == "cred":
+        res = trans.is_credential_stored(inc_json["name"])
+        if res:
+            ans = "YES CRED IS STORED"
+            logging.debug("YES CRED IS STORED")
+        else:
+            ans = "CRED NOT STORED"
+            logging.debug("NO IT IS NOT")
+    elif inc_json["type"] == "proof":
+        res = trans.is_proof_validated(inc_json["cred_name"])
+        if res:
+            ans = "YES PROOF CONTAINING THIS CRED HAS BEEN VALIDATED AS TRU"
+            logging.debug("YES CRED IS STORED")
+        else:
+            ans = "PROOF CONTAINING THIS CRED IS NOT VALID"
+            logging.debug("NO IT IS NOT")
+    return make_response({"code": ans})
 
+
+@app.route("/shop/", methods=["POST"])
+def shoprender():
+
+    #todo: see if any incoming shop-related tasks:
+        #todo: check for unresponded proposals
+        #todo: inform of any undertaken proof requests
+        #todo: inform of any acquired credentials
+
+    #todo:
+        #todo: parse this data, have respond buttons and forms
+        #e.g. simple accept/reject for a credential request
+        #notify pending tasks, give response option
+
+    data = None
+
+    events = get_outstanding_events(config.agent_data.agent_role)
+
+    return make_response({"code": "succ"})
+
+def get_outstanding_events(role=None):
+
+    ##OK. VENDOR:
+        ## Payment proposals must be paired with issued credentials.
+        ## Verified payment proofs are then, internally, paired with a package numer
+    events = []
+    if role == "flaskvendor":
+        if trans.have_received_proof_proposal("payment_agreement"):
+            events.append({
+                "type": "payment_request",
+            })
+
+
+##### END interface routes
 def register_did(ledger_url, seed=None, alias=None, role="TRUST_ANCHOR"):
 
     content = {
@@ -154,7 +206,7 @@ def output_json_invite():
 
 def await_connection():
     while True:
-        if not config.agent_data.active :
+        if not config.agent_data.active:
             logging.debug("WAITING FOR CONNECTION")
             time.sleep(2)
         else:
@@ -221,6 +273,8 @@ def main():
     start_aries(start_port, seed, agent_role)
     await_agent(agent_url)
 
+    logging.debug("test")
+
     if agent_role == "flaskbank":
         trans.register_payment_schema(agent_url)
 
@@ -242,15 +296,12 @@ def main():
         os.environ[upper_role] = did
         logging.debug("set env for public did of: %s as %s", upper_role, did)
 
+        connection_id = output_json_invite()
+        config.agent_data.connection_id = connection_id
 
-    connection_id = output_json_invite()
-    config.agent_data.connection_id = connection_id
-
-
-    app.run(host='0.0.0.0', port=start_port+2)
+    app.run(host='0.0.0.0', port=start_port+2, debug=False)
 
 if __name__ == "__main__":
     config.setup()
-    logging.basicConfig(level=logging.DEBUG, format=' %(threadName)s : %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format=' --- %(message)s')
     main()
-

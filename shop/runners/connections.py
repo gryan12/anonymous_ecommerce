@@ -17,29 +17,9 @@ def make_inv():
     return make_response(json.dumps(resp["invitation"]), 200)
 
 
-@connections.route("/connections/set_dids", methods=["POST"])
-def set_dids():
-    did_dict = request.form.to_dict()
-
-    if "shipper_did" in did_dict.keys():
-        if did_dict["shipper_did"]:
-            config.agent_data.shipper_did = did_dict["shipper_did"]
-
-    if "bank_did" in did_dict.keys():
-        if did_dict["bank_did"]:
-            config.agent_data.bank_did = did_dict["bank_did"]
-
-    if "vendor_did" in did_dict.keys():
-        if did_dict["vendor_did"]:
-            config.agent_data.vendor_did = did_dict["vendor_did"]
-
-    return redirect(request.referrer)
-
 @connections.route("/connections/current/", methods=["POST"])
 def set_current_conn():
-    print(request.headers)
     data = request.json
-    print(data)
     if "selected_connection" in data:
         if data["selected_connection"] is not None:
             config.agent_data.current_connection = data["selected_connection"]

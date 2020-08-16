@@ -21,34 +21,37 @@ import runners.support.settings as config
 ## any potential dispute could be accomplised over resending a credential offer.
 
 
-def send_payment_agreement_proposal():
+CRED_NAMES = [
+    "payment_agreement",
+    "payment_credential",
+    "package_cred",
+    "received_package",
+]
+
+##User
+#User -> Vendor
+def send_payment_agreement_proposal(product_id = config.DEMO_PRODUCT_ID):
+    proposal = {
+       "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+       "attributes": [
+            {
+                "name": "product_id",
+                "value": product_id
+            },
+        ]
+    }
     offer_json = build_credential_proposal(
         config.agent_data.current_connection,
         comment="request for payment agreement credential",
         schema_name="payment agreement",
+        prop_schema=proposal
     )
+
     resp = ob.send_cred_proposal(offer_json)
     print("response to payment proposal:", resp)
     return resp
 
-def send_payment_agreement_cred_offer(conn_id, creddef_id):
-    logging.debug("Issue credential to user")
-    builder = build_cred(creddef_id)
-    builder.with_attribute({"payment_endpoint": "placeholder_endpoint"}) \
-        .with_attribute({"timestamp": str(int(time.time()))}) \
-        .with_attribute({"amount": "50"}) \
-        .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
-        .with_conn_id(conn_id)
-
-    offer_req = builder.build_offer("purchase request")
-    config.agent_data.previews[creddef_id] = builder.build_preview()
-    return ob.send_cred_offer(offer_req)
-
-
-def refuse_payment_agreement(conn_id, creddef_id):
-    #todo: return a problem report if vendor cant/wont sell
-    return None
-
+#User -> Bank
 def propose_proof_of_payment_agreement(connection_id, cred_def_id):
     proposal = build_proof_proposal(
         "proof_of_payment_agreement"
@@ -64,6 +67,37 @@ def propose_proof_of_payment_agreement(connection_id, cred_def_id):
     ).build(connection_id, comment="proof of payment agreement")
     return ob.send_proof_proposal(proposal)
 
+#User -> Vendor
+def propose_proof_of_payment(connection_id, cred_def_id=None):
+    proposal = build_proof_proposal(
+        "proof_of_payment"
+    ).withAttribute(
+        "transaction_no",
+        cred_def_id,
+    ).withAttribute(
+        "timestamp",
+        cred_def_id
+    ).build(connection_id, comment="wanna prove payhment")
+    return ob.send_proof_proposal(proposal)
+
+def send_payment_agreement_cred_offer(conn_id, creddef_id):
+    logging.debug("Issue credential to user")
+    builder = build_cred(creddef_id)
+    builder.with_attribute({"payment_endpoint": "placeholder_endpoint"}) \
+        .with_attribute({"timestamp": str(int(time.time()))}) \
+        .with_attribute({"amount": "50"}) \
+        .with_attribute({"product_id": "123456"}) \
+        .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
+        .with_conn_id(conn_id)
+
+    offer_req = builder.build_offer("purchase request")
+    config.agent_data.previews[creddef_id] = builder.build_preview()
+    return ob.send_cred_offer(offer_req)
+
+
+def refuse_payment_agreement(conn_id, creddef_id):
+    #todo: return a problem report if vendor cant/wont sell
+    return None
 
 def request_proof_of_payment_agreement(creddef_id = None):
     if not creddef_id:
@@ -95,22 +129,9 @@ def send_payment_cred_offer(conn_id, creddef_id):
 
 
 #stage 3: proving payment
-#User -> Vendor
-def propose_proof_of_payment(connection_id, cred_def_id=None):
-    proposal = build_proof_proposal(
-        "proof_of_payment"
-    ).withAttribute(
-        "transaction_id",
-        cred_def_id,
-    ).withAttribute(
-        "timestamp",
-        cred_def_id
-    ).build(connection_id, comment="wanna prove payhment")
-
-    return ob.send_proof_proposal(proposal)
 
 #Vendor -> User
-def request_proof_of_payment(creddef_id = None):
+def request_proof_of_payment(creddef_id = None, presex_id=None):
 
     if not creddef_id:
         if not config.agent_data.payment_creddef:
@@ -126,11 +147,12 @@ def request_proof_of_payment(creddef_id = None):
         "timestamp",
         restrictions=[{"cred_def_id": creddef_id}]
     ).with_conn_id(config.agent_data.current_connection).build()
-    return ob.send_proof_request(req)
+    return ob.send_proof_request(req, presex_id)
 
 
 ##### PROOF PACKAGE AT SHIPPING SERVICE ######
 
+#Vendor -> User
 def propose_proof_of_dispatch(connection_id, cred_def_id):
     proposal = build_proof_proposal(
         "proof_of_dispatch"
@@ -143,8 +165,8 @@ def propose_proof_of_dispatch(connection_id, cred_def_id):
     ).build(connection_id, comment="Package is at shipping service")
     return ob.send_proof_proposal(proposal)
 
-#Vendor -> User
-def request_proof_of_dispatch(creddef_id = None):
+#User -> Vendor
+def request_proof_of_dispatch(creddef_id = None, presex_id=None):
 
     if not creddef_id:
         if not config.payment_creddef:
@@ -160,7 +182,7 @@ def request_proof_of_dispatch(creddef_id = None):
         "package_no",
         restrictions=[{"cred_def_id": creddef_id}]
     ).with_conn_id(config.agent_data.current_connection).build()
-    return ob.send_proof_request(req)
+    return ob.send_proof_request(req, presex_id)
 
 
 ##############################################
@@ -168,28 +190,14 @@ def request_proof_of_dispatch(creddef_id = None):
 ####END Stage 2
 ####START Stage 3: Package ownership
 
-
-def offer_credential(offer, preview, creddef_id):
-    config.agent_data.previews[creddef_id] = preview
-    config.agent_data.creddef_id = creddef_id
-    return ob.send_cred_offer(offer)
-
-def propose_crential(proposition):
-    return None
-
-def propose_proof(proposition):
-    return None
-
-def request_proof(request):
-    return None
-
-
+#Shipper -> Vendor
 def send_package_cred_offer(conn_id, creddef_id):
     logging.debug("Issue credential to user")
 
+    package_no = gen_package_no()
     builder = build_cred(creddef_id)
 
-    builder.with_attribute({"package_no": "asdf1234"}) \
+    builder.with_attribute({"package_no": package_no}) \
         .with_attribute({"timestamp": str(int(time.time()))}) \
         .with_attribute({"status": "dispatched_to_shipping_service"}) \
         .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
@@ -199,7 +207,7 @@ def send_package_cred_offer(conn_id, creddef_id):
     config.agent_data.previews[creddef_id] = builder.build_preview()
     return ob.send_cred_offer(offer_req)
 
-
+#User -> Shipper
 def propose_proof_of_ownership(conn_id, creddef_id):
     builder = build_proof_proposal(name="proof of package ownership")
     req = builder.withAttribute(
@@ -212,6 +220,7 @@ def propose_proof_of_ownership(conn_id, creddef_id):
     return ob.send_proof_proposal(req)
 
 
+#Shipper -> User
 def request_proof_of_ownership(creddef_id):
     builder = build_proof_request(name="proof of package ownership", version="1.0")
     req = builder.withAttribute(
@@ -225,6 +234,7 @@ def request_proof_of_ownership(creddef_id):
 
 ####END Stage 3
 ####START Stage 4: receipt of package
+#Shipper -> Vendor
 def send_package_receipt_cred_offer(conn_id, creddef_id):
     logging.debug("Issue receipt credential to vendor")
     builder = build_cred(creddef_id)
@@ -237,7 +247,7 @@ def send_package_receipt_cred_offer(conn_id, creddef_id):
     config.agent_data.previews[creddef_id] = builder.build_preview()
     return ob.send_cred_offer(offer_req)
 
-
+#User -> Vendor
 def request_proof_of_receipt():
     builder = build_proof_request(name="proof of shipped package", version="1.0")
     req = builder.withAttribute(
@@ -252,6 +262,7 @@ def request_proof_of_receipt():
     ).with_conn_id(config.agent_data.current_connection).build()
     return ob.send_proof_request(req)
 
+#Vendor -> User
 def propose_proof_of_package_status(connection_id, cred_def_id=None):
     proposal = build_proof_proposal(
         "proof_of_package_status"
@@ -298,13 +309,10 @@ def get_creddefid(schema_name):
         return payment_creds[0]["cred_def_id"]
 
 
-
 def get_payment_creddefid():
     credentials = ob.get_credentials()
     res = credentials["results"]
-    print("results of payment credf: ", res)
     payment_creds = [x for x in res if "payment_credential" in x["schema_id"]]
-    print("payment creds", res)
     if payment_creds:
         return payment_creds[0]["cred_def_id"]
 
@@ -322,7 +330,7 @@ def register_payment_agreement_schema(url):
     schema = {
         "schema_name": schema_name,
         "schema_version": "1.0",
-        "attributes": ["amount", "timestamp", "payment_endpoint"]
+        "attributes": ["amount", "timestamp", "payment_endpoint", "product_id"]
     }
     response = ob.post(url + "/schemas", data=schema)
     id = response["schema_id"]
@@ -348,6 +356,7 @@ def register_payment_schema(url):
     if resp:
         print(resp)
         config.agent_data.creddef_id = resp["credential_definition_id"]
+        config.agent_data.payment_creddef = resp["credential_definition_id"]
         logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
         return id, resp["credential_definition_id"]
 
@@ -370,7 +379,6 @@ def register_package_schema(url):
         logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
         return id, resp["credential_definition_id"]
 
-
 def register_receipt_schema(url):
     schema_name = "received_package"
     schema = {
@@ -390,25 +398,91 @@ def register_receipt_schema(url):
         logging.debug(f"Registered schema with id: %s, and creddef_id: %s", id, resp["credential_definition_id"])
         return id, resp["credential_definition_id"]
 
-
 def get_schema_name(creddef):
     resp = ob.get_creddef(creddef)
     if not resp:
         return False
-    print("s1: resp", resp)
 
     schema_id = resp["credential_definition"]["schemaId"]
-
-    print("got schema id: ", schema_id)
-
     resp = ob.get_schema(schema_id)
 
     if not resp:
         return False
-    print("resp of schema id: ", resp)
-
     return resp["schema"]["name"]
 
 
+#####VALIDATORS#####
+def is_credential_stored(name):
+    credentials = ob.get_credentials()
+    res = credentials["results"]
+    matching_creds = [x for x in res if name in x["schema_id"]]
+    if not matching_creds:
+        return False
+    return True
+
+def is_proof_validated(schema_name, proof_name=None, ex_id=None):
+    proof_records = ob.get_pres_ex_records()
+    results = proof_records["results"]
+    if results:
+        for result in results:
+            if "verified" in result:
+                if result["verified"] == "true":
+                    attrs = result["presentation_request"]["requested_attributes"]
+                    for attr in attrs:
+                        for attrname in attrs[attr]:
+                            if attrname == "restrictions":
+                                restrictions = attrs[attr][attrname]
+                                for restriction in restrictions:
+                                    if "cred_def_id" in restriction:
+                                        name = get_schema_name(restriction["cred_def_id"])
+                                        if name == schema_name:
+                                            return True
+    return False
+
+def get_proof_validated(schema_name, proof_name=None, ex_id=None):
+    proof_records = ob.get_pres_ex_records()
+    results = proof_records["results"]
+    if results:
+        for result in results:
+            if "verified" in result:
+                if result["verified"] == "true":
+                    attrs = result["presentation_request"]["requested_attributes"]
+                    for attr in attrs:
+                        for attrname in attrs[attr]:
+                            if attrname == "restrictions":
+                                restrictions = attrs[attr][attrname]
+                                for restriction in restrictions:
+                                    if "cred_def_id" in restriction:
+                                        name = get_schema_name(restriction["cred_def_id"])
+                                        if name == schema_name:
+                                            return True
+    return False
+
+def have_receieved_proof_proposal(schema_name=None):
+    proof_records = ob.get_pres_ex_records()
+    results = proof_records["results"]
+    if results:
+        for result in results:
+            state = result["state"]
+            if state == "proposal_received":
+                proposal = result["presentation_proposal_dict"]["presentation_proposal"]
+                attrs = proposal["attributes"]
+                for attr in attrs:
+                    if "cred_def_id" in attr:
+                        if get_schema_name(attr["cred_def_id"]) == schema_name:
+                            return True
+    return False
 
 
+def get_cred_attr_value(name, offer):
+    attributes = offer["credential_offer_dict"]["credential_preview"]["attributes"]
+    for attr in attributes:
+        if attr["name"] == name:
+            return attr["value"]
+    return False
+
+
+def gen_package_no(n=7):
+    range_start = 10**(n-1)
+    range_end = (10**n)-1
+    return str(random.randint(range_start, range_end))

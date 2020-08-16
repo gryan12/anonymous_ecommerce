@@ -207,7 +207,6 @@ class ProofReqBuilder:
         self.attributes = attributes
         return self
 
-
     def with_conn_id(self, conn_id):
         self.conn_id = conn_id
         return self
@@ -316,8 +315,6 @@ class ProofPropositionBuilder:
         return proposition
 
 
-
-
 def buildProofWebRequest(connection_id, proof, trace=False):
     webReq = {
         "connection_id": connection_id,
@@ -325,3 +322,8 @@ def buildProofWebRequest(connection_id, proof, trace=False):
         "trace": trace
     }
     return json.dumps(webReq)
+
+def pretty_print_obj(json_dict):
+    pretty = json.dumps(json_dict, indent=2)
+    print(pretty)
+    return pretty

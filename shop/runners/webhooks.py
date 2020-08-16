@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
 import runners.support.settings as config
@@ -13,29 +14,29 @@ import runners.transaction_logic as trans
 
 webhooks = Blueprint('webhooks', __name__)
 
+log = logging.getLogger(__name__)
+
 @webhooks.route("/webhooks/topic/connections/", methods=["POST"])
 def connections():
-    logging.debug("CONNECTIONS REC")
     data = json.loads(request.data)
     state = data['state']
     initiator = data['initiator']
 
     if state == "request":
         if initiator == "self":
-            logging.debug(f"invitation used by {data['their_label']}")
+            log.debug(f"invitation used by {data['their_label']}")
 
     if state == "active":
-        logging.debug(f"Connection active with {data['their_label']} of did {data['their_did']} with initiator {data['initiator']}")
+        log.debug(f"Connection active with {data['their_label']} of did {data['their_did']} with initiator {data['initiator']}")
 
         if data['their_label'] == "flaskbank":
-            #config.bank_did = data['their_did']
-            logging.debug("Connection with BANK agent detected, with their did: %s", data["their_did"])
+            log.debug("Connection with BANK agent detected, with their did: %s", data["their_did"])
+
         elif data['their_label'] == "flaskvendor":
-            #config.vendor_did = data['their_did']
-            logging.debug("Connection with VENDOR agent detected, with their did: %s", data["their_did"])
+            log.debug("Connection with VENDOR agent detected, with their did: %s", data["their_did"])
+
         elif data['their_label'] == "flaskshipper":
-            #config.shipper_did = data['their_did']
-            logging.debug("Connection with SHIPPER agent detected, with their did: %s", data["their_did"])
+            log.debug("Connection with SHIPPER agent detected, with their did: %s", data["their_did"])
 
         if not config.agent_data.active:
             config.agent_data.active = True
@@ -46,47 +47,69 @@ def connections():
 @webhooks.route("/webhooks/topic/basicmessages/", methods=["POST"])
 def messages():
     data = json.loads(request.data)
-    logging.debug("received message : %s", data["content"])
+    log.debug("received message : %s", data["content"])
     return make_response(json.dumps({"code":"success"}), 200)
 
 @webhooks.route("/webhooks/topic/issue_credential/", methods=["POST"])
 def issue_cred():
     data = json.loads(request.data)
     state = data["state"]
-    logging.debug("issue cred with state: %s", state)
+    log.debug("issue cred with state: %s", state)
 
     if state == "proposal_received":
-        logging.debug("proposal eceived")
+
+        log.debug("proposal eceived")
         ##proposal of payment agreement
         if config.role == "flaskvendor":
-            logging.debug("proposal received as vendor")
+            log.debug("proposal received as vendor")
+            product_id = get_cred_proposal_value(data,"product_id")
+            log.debug("Proposal received for payment, for product with ID: %s", product_id)
             trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"])
+            config.agent_data.incoming_transaction(config.DEMO_PRODUCT_ID)
 
+    elif state == "proposal_sent":
+        if config.role == "flaskuser":
+            config.agent_data.requested_payment_agreement(config.DEMO_PRODUCT_ID)
 
     elif state == "offer_received":
         ob.send_cred_request(data["credential_exchange_id"])
 
-    elif state == "request_received":
+    elif state == "request_sent":
+        log.debug("====Issue cred: request sent")
+        if config.role == "flaskvendor":
+            config.agent_data.approved_transaction(config.DEMO_PRODUCT_ID)
 
+    elif state == "request_received":
         cred_preview = config.agent_data.previews[data["credential_definition_id"]]
+        schema_name = trans.get_schema_name(data["credential_definition_id"])
 
         if config.agent_data.agent_role == "flaskvendor":
             cred = {
                 "comment": "issuance of payment credential",
                 "credential_preview": cred_preview
             }
+
+            if schema_name == "payment_agreement":
+                config.agent_data.approved_transaction(config.DEMO_PRODUCT_ID)
+
+            elif schema_name == "package_cred":
+                package_no = trans.get_cred_attr_value("package_no", data)
+                config.agent_data.package_shipped(package_no)
+
+
         elif config.agent_data.agent_role == "flaskbank":
             cred = {
                 "comment": "issuance of package credential",
                 "credential_preview": cred_preview
             }
+
         elif config.agent_data.agent_role == "flaskshipper":
             cred = {
                 "comment": "cred offer",
                 "credential_preview": cred_preview
             }
-        resp = ob.issue_credential(data["credential_exchange_id"], cred)
 
+        resp = ob.issue_credential(data["credential_exchange_id"], cred)
 
     elif state == "credential_received":
         config.agent_data.credentials.append(
@@ -94,59 +117,96 @@ def issue_cred():
                 data["connection_id"]: data["credential_definition_id"]
             }
         )
+        log.debug("Stored credential of id: %s", data["credential_definition_id"])
 
-    elif state == "credential_acked":
-        logging.debug("Credential stored")
+        if config.role == "flaskvendor":
+            print("===========cred rec test============")
+            pretty_print_obj(data)
+            package_no = trans.get_cred_attr_value("package_no", data)
+            print("=======received cred with package no: ", package_no)
+            config.agent_data.receipt_confirmed(config.DEMO_PRODUCT_ID)
+
+        elif config.role == "flaskuser":
+            schema_name = trans.get_schema_name(data["credential_definition_id"])
+
+            if schema_name == "payment_agreement":
+                config.agent_data.received_agreement_cred(config.DEMO_PRODUCT_ID)
+
+            elif schema_name == "payment_cred":
+                config.agent_data.payment_credential_received(config.DEMO_PRODUCT_ID)
+
+    elif state == "credential_issued":
+        schema_name = trans.get_schema_name(data["credential_definition_id"])
+        log.debug("Issued credential, of schema name : %s", schema_name)
 
     return make_response(json.dumps({"code": "success"}), 200)
 
-#todo move proof and cred handing logic to their own funcs/objs
+
+## todo: use the webhooks to keep track of current states of packages etc
 @webhooks.route("/webhooks/topic/present_proof/", methods=["POST"])
 def present_proof():
     data = json.loads(request.data)
     presex_id = data["presentation_exchange_id"]
     state = data["state"]
-    logging.debug(f"message recieved thoruhg prsent proof, with creedx_id: {presex_id} and state: {state}")
-
+    log.debug(f"message recieved thoruhg prsent proof, with creedx_id: {presex_id} and state: {state}")
+    #pretty_print_obj(data)
 
     if state == "proposal_received":
         proposal = data["presentation_proposal_dict"]["presentation_proposal"]
-        print(proposal)
 
         try:
             creddef_id = proposal["attributes"][0]["cred_def_id"]
-            logging.debug("received proposal for proof presentation: with id: %s", creddef_id)
+            log.debug("received proposal for proof presentation: with id: %s", creddef_id)
         except Exception as e:
             print(e)
-            return make_response({"code":"error verifying credenial"})
+            return make_response({"code": "error verifying credenial"})
 
         schema_name = trans.get_schema_name(creddef_id)
-        if schema_name == "received_package":
-            trans.request_proof_of_dispatch(creddef_id)
-
-        elif schema_name == "package_cred":
-            trans.request_proof_of_ownership(creddef_id)
+        if not schema_name:
+            logging.debug("====Error fetching Schema name===")
+            return False
 
         if config.role == "flaskvendor":
-            logging.debug("... at vendor")
             if schema_name:
+                config.agent_data.incoming_transaction(config.DEMO_PRODUCT_ID)
+                print("vendor dets: ", config.agent_data.transactions)
                 if schema_name == "payment_credential":
-                    trans.request_proof_of_payment(creddef_id)
-
+                    trans.request_proof_of_payment(creddef_id, presex_id)
 
         elif config.role =="flaskuser":
-            logging.debug("requesting proof of package dispatch")
-            trans.request_proof_of_dispatch(creddef_id)
+            if schema_name == "received_package":
+                log.debug("requesting proof of package dispatch")
+                trans.request_proof_of_dispatch(creddef_id, presex_id)
 
         elif config.role =="flaskbank":
-            logging.debug("requesting proof of payment agreement")
+            log.debug("requesting proof of payment agreement")
             trans.request_proof_of_payment_agreement(creddef_id)
 
-    elif state == "presentation_received":
-        logging.debug("received user proof presentation")
-        proof = ob.verify_presentation(presex_id)
-        logging.debug("Verification result is: %s", proof["verified"])
+        elif config.role == "flaskshipper":
+            if schema_name == "package_cred":
+                trans.request_proof_of_ownership(creddef_id)
 
+    elif state == "presentation_received":
+        proof = ob.verify_presentation(presex_id)
+        log.debug("Verification result is: %s", proof["verified"])
+
+    elif state == "presentation_sent":
+        name = data["presentation_request"]["name"]
+        print("==name: ",  name)
+        print("=============Presentation Sent===========")
+        log.debug("==presentation sent")
+        if config.role == "flaskvendor":
+            config.agent_data.receipt_proven(config.DEMO_PRODUCT_ID)
+
+        if config.role == "flaskuser":
+            if name == "proof of payment":
+                config.agent_data.payment_credential_proven(config.DEMO_PRODUCT_ID)
+
+            elif name == "proof of payment agreement":
+                config.agent_data.payment_agreement_proven(config.DEMO_PRODUCT_ID)
+
+            elif name == "proof of dispatch":
+                config.agent_data.package_ownership_proven(config.DEMO_PRODUCT_ID)
 
     elif state == "request_received":
         pres_req = data["presentation_request"]
@@ -170,14 +230,14 @@ def present_proof():
                         "cred_id": ref_creds[req_attr]["cred_info"]["referent"], "revealed": True,
                     }
                 else:
-                    logging.debug("No credential found in wallet for requested attribute")
+                    log.debug("No credential found in wallet for requested attribute")
 
             preds = {}
-            for req_pred in pres_req["requested_predicates"]:
-                if req_pred in ref_creds:
-                    preds[req_pred] = {
-                        "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
-                    }
+           # for req_pred in pres_req["requested_predicates"]:
+           #     if req_pred in ref_creds:
+           #         preds[req_pred] = {
+           #             "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
+           #         }
 
             proof_pres = {
                 "requested_predicates": preds,
@@ -185,20 +245,52 @@ def present_proof():
                 "self_attested_attributes": {},
             }
 
-            print(proof_pres)
-
             ob.send_presentation(proof_pres, presex_id)
+
+    elif state == "verified":
+        log.debug("Verified")
+        if config.role == "flaskvendor":
+            if data["verified"] == "true":
+                log.debug("payment proven")
+                config.agent_data.payment_proven(config.DEMO_PRODUCT_ID)
+
+        elif config.role == "flaskuser":
+            if data["verified"] == "true":
+                log.debug("Receipt proven")
+                config.agent_data.receipt_validated(config.DEMO_PRODUCT_ID)
 
     return make_response(json.dumps({"code":"success"}), 200)
 
 @webhooks.route("/webhooks/topic/problem_report/", methods=["POST"])
 def handle_problem():
-    data = json.loads(request.data)
     print(request.headers)
     print(request.data)
     return make_response(json.dumps({"code": "success"}), 200)
+
 
 @webhooks.route("/webhooks/topic/<topicname>/", methods=["POST", "GET"])
 def catch(topicname):
     print("got unhandled request of topic: ", topicname)
     return make_response(json.dumps({"code":"not yet done"}), 501)
+
+def pretty_print_obj(json_dict):
+    pretty = json.dumps(json_dict, indent=2)
+    print(pretty)
+    return pretty
+
+
+def get_proposal_value(proposal, attr_name):
+    if "presentation_proppsal_dict" in proposal:
+        attrs = proposal["presentation_proposal_dict"]["presentation_proposal"]["attributes"]
+
+        for attr in attrs:
+            if attr["name"] == attr_name:
+                return attr["value"]
+
+#get product id
+def get_cred_proposal_value(proposal, attr_name):
+    if "credential_proposal_dict" in proposal:
+        attrs = proposal["credential_proposal_dict"]["credential_proposal"]["attributes"]
+        for attr in attrs:
+            if attr["name"] == attr_name:
+                return attr["value"]

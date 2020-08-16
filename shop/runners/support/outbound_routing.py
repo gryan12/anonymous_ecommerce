@@ -81,8 +81,12 @@ def get_cred_ex_records():
     return get(req_url)
 
 ##proofs
-def send_proof_request(proof_req):
-    req_url = AGENT_URL + "/present-proof/send-request"
+def send_proof_request(proof_req, presex_id=None):
+    if presex_id:
+        url = f"/present-proof/records/{presex_id}/send-request"
+    else:
+        url = "/present-proof/send-request"
+    req_url = AGENT_URL + url
     return post(req_url, data=proof_req)
 
 def send_proof_proposal(proposal):
@@ -157,9 +161,6 @@ def get_creddef(creddef):
 
 
 
-def get_public_did():
-    req_url = AGENT_URL + "/wallet/did/public"
-    return get(req_url)
 
 ##misc
 
