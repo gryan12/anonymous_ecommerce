@@ -41,6 +41,7 @@ def get_conns():
 @connections.route("/connections/get_active_connections/", methods=["GET"])
 def get_active_conns():
     cons = ob.get_connections()
+
     agents = [
         (x['their_label'], x['connection_id']) for x in cons['results'] if x['state'] == "active"
     ]
@@ -48,9 +49,12 @@ def get_active_conns():
     if not config.agent_data.current_connection:
         current = "None"
     else:
-        current= config.agent_data.current_connection
+        current = config.agent_data.current_connection
 
     conn_details = ob.get_connection_details(current)
+    if not conn_details:
+        return make_response({"result": "no active connections"})
+
     if "their_label" in conn_details:
         their_label = conn_details['their_label']
         agents.append(("current_connection", their_label))

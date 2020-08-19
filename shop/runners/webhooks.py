@@ -6,7 +6,6 @@ import logging
 import os
 import sys
 
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
 import runners.support.settings as config
@@ -57,27 +56,30 @@ def issue_cred():
     log.debug("issue cred with state: %s", state)
 
     if state == "proposal_received":
-
-        log.debug("proposal eceived")
-        ##proposal of payment agreement
         if config.role == "flaskvendor":
             log.debug("proposal received as vendor")
-            product_id = get_cred_proposal_value(data,"product_id")
+            product_id = get_cred_proposal_value(data, "product_id")
+            amount = get_cred_proposal_value(data, "amount")
             log.debug("Proposal received for payment, for product with ID: %s", product_id)
-            trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"])
+
+            config.agent_data.transaction_request = {
+                "product": product_id,
+            }
+            if amount:
+                config.agent_data.transaction_request["amount"] = amount
+
+            trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id)
             config.agent_data.incoming_transaction(config.DEMO_PRODUCT_ID)
 
     elif state == "proposal_sent":
         if config.role == "flaskuser":
-            config.agent_data.requested_payment_agreement(config.DEMO_PRODUCT_ID)
+            config.agent_data.requested_payment_agreement()
 
     elif state == "offer_received":
         ob.send_cred_request(data["credential_exchange_id"])
 
     elif state == "request_sent":
-        log.debug("====Issue cred: request sent")
-        if config.role == "flaskvendor":
-            config.agent_data.approved_transaction(config.DEMO_PRODUCT_ID)
+        log.debug("request sent")
 
     elif state == "request_received":
         cred_preview = config.agent_data.previews[data["credential_definition_id"]]
@@ -89,13 +91,13 @@ def issue_cred():
                 "credential_preview": cred_preview
             }
 
+        if config.agent_data.agent_role == "flaskuser":
             if schema_name == "payment_agreement":
-                config.agent_data.approved_transaction(config.DEMO_PRODUCT_ID)
+                config.agent_data.approved_transaction()
 
-            elif schema_name == "package_cred":
-                package_no = trans.get_cred_attr_value("package_no", data)
-                config.agent_data.package_shipped(package_no)
-
+           # elif schema_name == "package_cred":
+           #     #package_no = trans.get_cred_attr_value("package_no", data)
+           #     config.agent_data.package_shipped()
 
         elif config.agent_data.agent_role == "flaskbank":
             cred = {
@@ -120,24 +122,42 @@ def issue_cred():
         log.debug("Stored credential of id: %s", data["credential_definition_id"])
 
         if config.role == "flaskvendor":
-            print("===========cred rec test============")
-            pretty_print_obj(data)
-            package_no = trans.get_cred_attr_value("package_no", data)
-            print("=======received cred with package no: ", package_no)
-            config.agent_data.receipt_confirmed(config.DEMO_PRODUCT_ID)
+           # print("===========cred rec test============")
+           # pretty_print_obj(data)
+           # package_no = trans.get_cred_attr_value("package_no", data)
+           # print("=======received cred with package no: ", package_no)
+            config.agent_data.receipt_confirmed()
 
         elif config.role == "flaskuser":
             schema_name = trans.get_schema_name(data["credential_definition_id"])
+            print("-=======schema name: ", schema_name)
 
             if schema_name == "payment_agreement":
-                config.agent_data.received_agreement_cred(config.DEMO_PRODUCT_ID)
+                config.agent_data.received_agreement_cred()
 
-            elif schema_name == "payment_cred":
-                config.agent_data.payment_credential_received(config.DEMO_PRODUCT_ID)
+            elif schema_name == "payment_credential":
+                config.agent_data.payment_credential_received()
+
+            elif schema_name == "package_cred":
+                config.agent_data.package_credential_received()
 
     elif state == "credential_issued":
         schema_name = trans.get_schema_name(data["credential_definition_id"])
         log.debug("Issued credential, of schema name : %s", schema_name)
+
+        if config.role == "flaskbank":
+            config.agent_data.issued_payment_credential()
+
+        elif config.role == "flaskshipper":
+            config.agent_data.package_received()
+
+        if config.role == "flaskvendor":
+
+            if schema_name == "package_cred":
+                config.agent_data.package_shipped()
+            else:
+                config.agent_data.approved_transaction()
+
 
     return make_response(json.dumps({"code": "success"}), 200)
 
@@ -154,6 +174,7 @@ def present_proof():
     if state == "proposal_received":
         proposal = data["presentation_proposal_dict"]["presentation_proposal"]
 
+        pretty_print_obj(data)
         try:
             creddef_id = proposal["attributes"][0]["cred_def_id"]
             log.debug("received proposal for proof presentation: with id: %s", creddef_id)
@@ -162,29 +183,28 @@ def present_proof():
             return make_response({"code": "error verifying credenial"})
 
         schema_name = trans.get_schema_name(creddef_id)
+        print("schema name; ", schema_name)
         if not schema_name:
             logging.debug("====Error fetching Schema name===")
             return False
 
         if config.role == "flaskvendor":
             if schema_name:
-                config.agent_data.incoming_transaction(config.DEMO_PRODUCT_ID)
-                print("vendor dets: ", config.agent_data.transactions)
+                #print("vendor dets: ", config.agent_data.transactions)
                 if schema_name == "payment_credential":
                     trans.request_proof_of_payment(creddef_id, presex_id)
 
-        elif config.role =="flaskuser":
+        elif config.role == "flaskuser":
             if schema_name == "received_package":
                 log.debug("requesting proof of package dispatch")
                 trans.request_proof_of_dispatch(creddef_id, presex_id)
 
-        elif config.role =="flaskbank":
+        elif config.role == "flaskbank":
             log.debug("requesting proof of payment agreement")
             trans.request_proof_of_payment_agreement(creddef_id)
 
-        elif config.role == "flaskshipper":
-            if schema_name == "package_cred":
-                trans.request_proof_of_ownership(creddef_id)
+        if config.role == "flaskshipper":
+            trans.request_proof_of_ownership(creddef_id)
 
     elif state == "presentation_received":
         proof = ob.verify_presentation(presex_id)
@@ -192,20 +212,24 @@ def present_proof():
 
     elif state == "presentation_sent":
         name = data["presentation_request"]["name"]
-        print("==name: ",  name)
-        print("=============Presentation Sent===========")
+        print("identifiers: ", data["presentation"]["identifiers"])
+        identifiers = data["presentation"]["identifiers"][0]
         log.debug("==presentation sent")
+
         if config.role == "flaskvendor":
             config.agent_data.receipt_proven(config.DEMO_PRODUCT_ID)
 
+        elif config.role == "flaskshipper":
+            config.agent_data.receipt_proven()
+
         if config.role == "flaskuser":
-            if name == "proof of payment":
+            if name == "proof of payment" or "payment_credential" in identifiers["schema_id"]:
                 config.agent_data.payment_credential_proven(config.DEMO_PRODUCT_ID)
 
-            elif name == "proof of payment agreement":
+            elif name == "proof of payment agreement" or "payment_agreement" in identifiers["schema_id"]:
                 config.agent_data.payment_agreement_proven(config.DEMO_PRODUCT_ID)
 
-            elif name == "proof of dispatch":
+            elif name == "proof of dispatch" or "package_cred" in identifiers["schema_id"]:
                 config.agent_data.package_ownership_proven(config.DEMO_PRODUCT_ID)
 
     elif state == "request_received":
@@ -257,7 +281,18 @@ def present_proof():
         elif config.role == "flaskuser":
             if data["verified"] == "true":
                 log.debug("Receipt proven")
-                config.agent_data.receipt_validated(config.DEMO_PRODUCT_ID)
+                config.agent_data.package_receipt_validated(config.DEMO_PRODUCT_ID)
+
+        elif config.role == "flaskbank":
+            if data["verified"] == "true":
+                log.debug("Receipt proven")
+                config.agent_data.validate_agreement()
+
+        elif config.role == "flaskshipper":
+            if data["verified"] == "true":
+                log.debug("Receipt proven")
+                config.agent_data.ownership_validated()
+
 
     return make_response(json.dumps({"code":"success"}), 200)
 
@@ -294,3 +329,4 @@ def get_cred_proposal_value(proposal, attr_name):
         for attr in attrs:
             if attr["name"] == attr_name:
                 return attr["value"]
+    return False

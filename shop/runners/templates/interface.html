@@ -40,26 +40,6 @@
 <div class="container">
     <div class="row">
         <div class="col-md-12">
-            <p class="font-weight-light">
-                Welcome to the demo. Connections between agents are currenty establised through pasting json invite details.
-                Getting the current anoncreds flow connections need to be established between:
-                the user and the bank, the user and the vendor, the shipping service and the user.
-                Checking state of current agent<-->agent connections can be done in connections tab,
-                credentials (and exchange history) can be seen in the exchange tab, and proof exchange hsitory and issuing
-                can be done in the proofs tab.<br>
-                Credentials: atm the public dids of bank/vendor/shipping service need to be manually input in the labelled fields
-                in the credentials tab.<br>
-                All text is left as json atm, will leave pretty printing till later.
-
-                Anoncreds Stages: (3.1 and 3.2 alt and not currently in the demo)<br>
-                    1. Bank agent issues (offer of) payment credential to user<br>
-                    2. Vendor requests proof of payment to user<br>
-                    3. Vendor issues package credential to User<br>
-                    3.1 Shipping service issues proof of receipt to vendor<br>
-                    3.2 User requests proof of receipt from vendor<br>
-                    4. Shipper agent requests proof of package ownership to user<br>
-
-
             <div id="connection_stuff">
                 <h3>
                     Actions
@@ -90,7 +70,7 @@
 
 <div id = "sourceTest">
 </div>
-<iframe name="hiddenFrame" width="0" height="0" border="0" style="display: none;"></iframe>
+<iframe name="hiddenFrame" width="0" height="0" style="display: none;"></iframe>
 
 <script>
  function getStatus() {

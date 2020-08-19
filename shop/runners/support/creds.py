@@ -255,7 +255,7 @@ class ProofReqBuilder:
 
 
 def build_proof_proposal(name=None):
-    return ProofPropositionBuilder()
+    return ProofPropositionBuilder(name)
 
 
 

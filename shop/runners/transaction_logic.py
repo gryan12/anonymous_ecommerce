@@ -48,8 +48,21 @@ def send_payment_agreement_proposal(product_id = config.DEMO_PRODUCT_ID):
     )
 
     resp = ob.send_cred_proposal(offer_json)
-    print("response to payment proposal:", resp)
     return resp
+
+def send_payment_agreement_cred_offer(conn_id, creddef_id, product_id, value="50"):
+    logging.debug("Issue credential to user")
+    builder = build_cred(creddef_id)
+    builder.with_attribute({"payment_endpoint": "placeholder_endpoint"}) \
+        .with_attribute({"timestamp": str(int(time.time()))}) \
+        .with_attribute({"amount": value}) \
+        .with_attribute({"product_id": product_id}) \
+        .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
+        .with_conn_id(conn_id)
+
+    offer_req = builder.build_offer("purchase request")
+    config.agent_data.previews[creddef_id] = builder.build_preview()
+    return ob.send_cred_offer(offer_req)
 
 #User -> Bank
 def propose_proof_of_payment_agreement(connection_id, cred_def_id):
@@ -80,19 +93,6 @@ def propose_proof_of_payment(connection_id, cred_def_id=None):
     ).build(connection_id, comment="wanna prove payhment")
     return ob.send_proof_proposal(proposal)
 
-def send_payment_agreement_cred_offer(conn_id, creddef_id):
-    logging.debug("Issue credential to user")
-    builder = build_cred(creddef_id)
-    builder.with_attribute({"payment_endpoint": "placeholder_endpoint"}) \
-        .with_attribute({"timestamp": str(int(time.time()))}) \
-        .with_attribute({"amount": "50"}) \
-        .with_attribute({"product_id": "123456"}) \
-        .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
-        .with_conn_id(conn_id)
-
-    offer_req = builder.build_offer("purchase request")
-    config.agent_data.previews[creddef_id] = builder.build_preview()
-    return ob.send_cred_offer(offer_req)
 
 
 def refuse_payment_agreement(conn_id, creddef_id):
@@ -209,7 +209,7 @@ def send_package_cred_offer(conn_id, creddef_id):
 
 #User -> Shipper
 def propose_proof_of_ownership(conn_id, creddef_id):
-    builder = build_proof_proposal(name="proof of package ownership")
+    builder = build_proof_proposal("proof of package ownership")
     req = builder.withAttribute(
         "package_no",
         cred_def_id=creddef_id
@@ -268,10 +268,10 @@ def propose_proof_of_package_status(connection_id, cred_def_id=None):
         "proof_of_package_status"
     ).withAttribute(
         "package_no",
-        cred_def_id,
+        cred_def_id=cred_def_id,
     ).withAttribute(
         "timestamp",
-        cred_def_id
+        cred_def_id=cred_def_id,
     ).build(connection_id, comment="Package is at shipping service")
     return ob.send_proof_proposal(proposal)
 
@@ -324,7 +324,6 @@ def get_package_creddefid():
         return package_creds[0]["cred_def_id"]
 
 
-####schema registrations#####
 def register_payment_agreement_schema(url):
     schema_name = "payment_agreement"
     schema = {
@@ -475,7 +474,7 @@ def have_receieved_proof_proposal(schema_name=None):
 
 
 def get_cred_attr_value(name, offer):
-    attributes = offer["credential_offer_dict"]["credential_preview"]["attributes"]
+    attributes = offer["credential_proposal_dict"]["credential_preview"]["attributes"]
     for attr in attributes:
         if attr["name"] == name:
             return attr["value"]

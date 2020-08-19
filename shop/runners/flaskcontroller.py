@@ -1,7 +1,6 @@
 import json
 import requests
 import random
-from threading import Thread
 import os
 import sys
 import time
@@ -14,6 +13,7 @@ from runners.webhooks import webhooks
 from runners.proofs import proofs
 from runners.credentials import credentials
 from runners.connections import connections
+from runners.shop import shop
 import runners.support.settings as config
 import runners.transaction_logic as trans
 
@@ -23,6 +23,7 @@ app.register_blueprint(webhooks)
 app.register_blueprint(proofs)
 app.register_blueprint(connections)
 app.register_blueprint(credentials)
+app.register_blueprint(shop)
 
 import logging
 
@@ -56,13 +57,6 @@ def set_active_connection():
 def render_proofs():
     name = os.getenv("ROLE")
     return render_template("proofs.html", name=name)
-
-
-@app.route("/home/shop", methods=["GET"])
-def render_shop():
-    name = os.getenv("ROLE")
-    stage = config.demo_stage
-    return render_template("shop.html", name=name)
 
 @app.route("/home/credentials", methods=["GET"])
 def render_credentials():
@@ -121,30 +115,12 @@ def test_search():
     return make_response({"code": ans})
 
 
-@app.route("/shop/", methods=["POST"])
-def shoprender():
-
-    #todo: see if any incoming shop-related tasks:
-        #todo: check for unresponded proposals
-        #todo: inform of any undertaken proof requests
-        #todo: inform of any acquired credentials
-
-    #todo:
-        #todo: parse this data, have respond buttons and forms
-        #e.g. simple accept/reject for a credential request
-        #notify pending tasks, give response option
-
-    data = None
-
-    events = get_outstanding_events(config.agent_data.agent_role)
-
-    return make_response({"code": "succ"})
 
 def get_outstanding_events(role=None):
 
     ##OK. VENDOR:
-        ## Payment proposals must be paired with issued credentials.
-        ## Verified payment proofs are then, internally, paired with a package numer
+    ## Payment proposals must be paired with issued credentials.
+    ## Verified payment proofs are then, internally, paired with a package numer
     events = []
     if role == "flaskvendor":
         if trans.have_received_proof_proposal("payment_agreement"):
@@ -179,7 +155,7 @@ def gen_rand_seed():
     seed = ("flask_s_000000000000000000000000" + name)[-32:]
     return name, seed
 
-##end funcs
+
 def await_agent(admin_url):
     while True:
         try:
@@ -222,8 +198,10 @@ def get_public_did():
         return None
 
 
+
 def flask_proc(host, port, debug=False):
     app.run(host=host, port=port, static_folder=os.path.abspath(os.getcwd() + '/static'))
+
 
 def hasActiveConnection():
     resp = ob.get_connections()
@@ -241,8 +219,12 @@ def hasActiveConnection():
             return True
     return False
 
+
+
 def getStageAndRole(credex_id):
     return ob.get_cred_ex_record(credex_id)
+
+
 
 def main():
     start_port = int(os.getenv("AGENT_PORT"))

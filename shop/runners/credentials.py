@@ -79,7 +79,15 @@ def req_purchase():
 
     if config.role != "flaskuser":
         make_response({"code": "not avialable for this agent"}, 500)
-
     trans.send_payment_agreement_proposal()
+    return make_response({"code": "received"})
 
+
+@credentials.route("/credentials/shop/approve_purchase/", methods=["GET"])
+def approve_purchase():
+    if not ob.hasActiveConnection():
+        return make_response({"code": "failure", "reason": "no active connections"})
+    if config.role != "flaskvendor":
+        make_response({"code": "not avialable for this agent"}, 400)
+    trans.approve_payment_agreement()
     return make_response({"code": "received"})

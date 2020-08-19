@@ -9,19 +9,22 @@ import runners.support.outbound_routing as ob
 import runners.support.settings as config
 import runners.transaction_logic as trans
 
-credentials = Blueprint('shop', __name__)
+shop = Blueprint('shop', __name__)
 
-
-@credentials.route("/shop", methods=["GET"])
+@shop.route("/home/shop", methods=["GET"])
 def render_shop_actions():
-    return render_template('shop.html')
-
-@credentials.route("/shop", methods=["GET"])
-def get_cred_ex_history():
-    return make_response(
-        json.dumps(ob.get_cred_ex_records()),
-        200
-    )
+    stage = config.agent_data.get_stage()
+    if config.agent_data.has_public:
+        did = get_public_did()
+        return render_template('shop.html', name=config.role, stage=stage, did=did)
+    else:
+        return render_template('shop.html', name=config.role, stage=stage)
 
 
-
+def get_public_did():
+    resp = ob.get_public_did()
+    res = resp["result"]
+    if "did" in res:
+        return res["did"]
+    else:
+        return None

@@ -25,7 +25,7 @@ def req_proof():
         return make_response({"code": "failure", "reason": "no active connections"})
 
     logging.debug("Has active connection :)")
-    role=os.getenv("ROLE")
+    role= os.getenv("ROLE")
 
     if role == "flaskvendor":
         trans.request_proof_of_payment()
