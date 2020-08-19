@@ -2,8 +2,9 @@ Demo implementation of a transaction using aca-py.
 
 Run demo code:
 
-    --> In current state needs to have an Indy ledger running on localhost port 9000.
-        I currently run an instance of BC Gov'v Von nNetwork ledger locally: github.com/bcgov/von-network
+    --> The demo code utilises the public BCGov Von test network and therefore requires an internet connection.
+
+    --> Running instructions: clone this repositary and then run the ./start_shop_agent script for all four agents as outlined below.
 
     --> start_shop_agent script can be run with four different agent names as follows:
             ./start_shop_agent flaskvendor
@@ -13,59 +14,58 @@ Run demo code:
             each should be run in a separate terminal window. The web interface and aca-py swagger API can then be
             accessed via localhost on the ports displayed in the terminal output, shown below for convenience:
 
-            bank:     interface: :5042/home    swagger API: :5041
+            bank:     interface: :7032/home    swagger API: :7041
             vendor:   interface: :7042/home    swagger API: :7041
             shipper:  interface: :7052/home    swagger API: :7051
-            user:     interface: :9052/home    swagger API: :9051
-
+            user:     interface: :7062/home    swagger API: :7051
 
     Demo uses a web interface, and is implemented with Flask.
-    The interface in particular is very much a WIP, with all rednered rtext currently left as raw json and there being little
-    action enforcement.
-
-    PLan to soon setup clear rendering of javascript and server-push events for a clear event-log on the interface page,
-    to make it much more clear what aries-indy protocols have been / are being executed.
 
    Connections:
-        --> connections currently establishes through pasting invitation JSON. invitation creation and receipt is done on the
-            home pages of the interface.
+            Connections between agents are established through pasting invite json details.
 
-            --nb temporarily will need to input a new invite when connceting to a previous agent (i.e. only current connection
-                 is used for anoncreds exchange). will change this soon
 
-Demo flow (not enforced):
+The intended flow of agent actions is outlined below. There is the option of directly choosing to issue and request credentials and proofs,
+with the actions under the credentials and proof tabs resepectively, or the shop tab provides a guided/enforced sequence of actions between
+the agents.
 
-1.     User agent establishes connection with bank.
+Demo flow:
 
-2.     bank issues credential to user.
+1.     User agent establishes connection with the vendor.
 
-3.     User establishes connection with vendor.
+2.     User requests to purchase an item.
 
-4.     Vendor requests proof of payment, user obliges
+3.     Vendor approves purchase request (automated to reduce clutter steps)
 
-5.     User establishes connection with shipping service.
+4.     User establishes connection with Bank.
+
+5.     The user proves payment agreement to the Bank.
+
+6.     The bank issues a proof of payment credential to the user.
+
+7.     The user establishes a fresh connection (or can reuse) with the vendor.
+
+8.     The user proves payment to the vendor
+
+9.     The vendor issues the user a credential containing the package number for their goods
+
+10.    The shipping service establishes a connection to the vendor.
+
+11.    The shipping service issues a credential confirming receipt of package number to the vendor
+
+12.    The vendor resues conneciton to user to propose proof of reciept (that package at shipping service)
+
+13.    The user establishes a connection with the shipping service.
+
+14.    The user proves package ownership to the vendor.
+
+15.    Completed. (upon success, the shipper would label and send goods at this point)
+
 
 6.    Shipping service requests proof of package ownership, user obliges.
 
 
-Implementing the other variation(s) atm but above is only flow that works so far.
-
-
-
-File description: 
-	
-	-> [dir] support. helper funcs
-		--creds.py: for building indy/aries anoncreds json 
-		--outbound_routing.py: funcitons for making http requests to acapy instance 
-		--
-
-	-> flaskcontroller.py: the controller logic, for all roles
-		--flask is used to handle webhooks originating from the aca instance
-		--and to provide the web interface for interacting with the controllers. 
-
-	-> agent_proc.py: logic for initialising acapy instance
-
-	-> start_shop_agent.sh: script to initialise an agent
+File description:
 
 Assumptions:
     The public DID of payment services are made available through application code.
