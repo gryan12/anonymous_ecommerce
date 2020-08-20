@@ -45,6 +45,8 @@
           <button class="btn btn-primary" id="propose_proof_payment_agreement" onclick="proposeProofOfPaymentAgreement()"> Make payment (Proof of agreement) </button>
           <button class="btn btn-primary" id="propose_proof_of_ownership" onclick="proposeProofOfOwnership()"> Propose proof of ownership</button>
           {% endif %}
+
+          {% if name != "flaskbank" %}
           <button class="btn btn-primary" id="issue_proof" onclick="requestProof()">
               {% if name == "flaskvendor" %}
               Request Proof of Payment
@@ -52,10 +54,9 @@
               Request Proof of Package Ownership
               {% elif name =="flaskuser" %}
               Request Proof of Package Status
-              {% else  %}
-              None
               {% endif %}
           </button>
+          {% endif %}
       </div>
       <div class="col-sm-4">
         <h3><u>Proof Exchange History</u></h3>

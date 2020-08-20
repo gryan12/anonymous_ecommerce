@@ -4,7 +4,7 @@ import random
 import os
 import sys
 import time
-from flask import Flask, request, make_response, render_template, redirect
+from flask import Flask, request, make_response, render_template, redirect, url_for
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
@@ -27,6 +27,9 @@ app.register_blueprint(shop)
 
 import logging
 
+@app.route("/", methods=["GET"])
+def red():
+    return redirect(url_for('shop'))
 
 @app.route("/home/", methods=["GET"])
 def render_interface():

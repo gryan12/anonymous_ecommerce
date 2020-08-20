@@ -42,12 +42,12 @@ class VendorData:
     def get_stage(self):
         return self.stages[self.stage]
 
-    def incoming_transaction(self, product_id):
+    def incoming_transaction(self):
         log.debug("Vendor at stage: %s", self.get_stage())
         if self.stage == 0:
             self.stage += 1
 
-    def approved_transaction(self, product_id):
+    def approved_transaction(self):
         if self.stage == 1:
             self.stage += 1
             log.debug("Vendor at stage: %s", self.get_stage())
@@ -62,13 +62,13 @@ class VendorData:
             self.stage += 1
             log.debug("Vendor at stage: %s", self.get_stage())
 
-    def receipt_confirmed(self, package_no=None):
+    def receipt_confirmed(self):
         if self.stage == 4:
             self.stage += 1
             log.debug("Vendor at stage: %s", self.get_stage())
             log.debug("======UV: Receipt Credential Received for package: %s", )
 #
-    def receipt_proven(self, package_no):
+    def receipt_proven(self):
         if self.stage == 5:
             self.stage += 1
             log.debug("Vendor at stage: %s", self.get_stage())
@@ -222,7 +222,6 @@ class ShipperData:
         self.creddefs = {}
         self.stages = [
             "start",
-            "package_received",
             "receipt_issued",
             "completed"
         ]
@@ -232,12 +231,10 @@ class ShipperData:
     def get_stage(self):
         return self.stages[self.stage]
 
-    def package_received(self):
+    def receipt_issued(self):
         if self.stage == 0:
             self.stage += 1
             log.debug("Shipper stage: %s", self.get_stage())
-        elif self.stage == 2:
-            self.stage = 1
 
     def ownership_validated(self):
         if self.stage == 1:

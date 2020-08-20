@@ -69,7 +69,7 @@ def issue_cred():
                 config.agent_data.transaction_request["amount"] = amount
 
             trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id)
-            config.agent_data.incoming_transaction(config.DEMO_PRODUCT_ID)
+            config.agent_data.incoming_transaction()
 
     elif state == "proposal_sent":
         if config.role == "flaskuser":
@@ -149,7 +149,7 @@ def issue_cred():
             config.agent_data.issued_payment_credential()
 
         elif config.role == "flaskshipper":
-            config.agent_data.package_received()
+            config.agent_data.receipt_issued()
 
         if config.role == "flaskvendor":
 
@@ -217,7 +217,7 @@ def present_proof():
         log.debug("==presentation sent")
 
         if config.role == "flaskvendor":
-            config.agent_data.receipt_proven(config.DEMO_PRODUCT_ID)
+            config.agent_data.receipt_proven()
 
         elif config.role == "flaskshipper":
             config.agent_data.receipt_proven()
@@ -276,7 +276,7 @@ def present_proof():
         if config.role == "flaskvendor":
             if data["verified"] == "true":
                 log.debug("payment proven")
-                config.agent_data.payment_proven(config.DEMO_PRODUCT_ID)
+                config.agent_data.payment_proven()
 
         elif config.role == "flaskuser":
             if data["verified"] == "true":
@@ -292,7 +292,6 @@ def present_proof():
             if data["verified"] == "true":
                 log.debug("Receipt proven")
                 config.agent_data.ownership_validated()
-
 
     return make_response(json.dumps({"code":"success"}), 200)
 
