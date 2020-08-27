@@ -4,6 +4,9 @@ import logging
 import os
 import sys
 
+
+# blueprint for handling requests from the connections tab / related
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
 import runners.support.settings as config

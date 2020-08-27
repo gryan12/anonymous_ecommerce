@@ -10,16 +10,16 @@
 <script src="{{url_for('static', filename='javascript/shop.js')}}"></script>
 <script src="{{url_for('static', filename='javascript/shipper_demo.js')}}"></script>
 
-{% if name == "flaskuser" %}
+{% if name == "user" %}
     <script src="{{url_for('static', filename='javascript/user_demo.js')}}"></script>
 {% endif %}
-{% if name == "flaskvendor" %}
+{% if name == "vendor" %}
     <script src="{{url_for('static', filename='javascript/vendor_demo.js')}}"></script>
 {% endif %}
-{% if name == "flaskbank" %}
+{% if name == "bank" %}
     <script src="{{url_for('static', filename='javascript/bank_demo.js')}}"></script>
 {% endif %}
-{% if name == "flaskbank" %}
+{% if name == "bank" %}
 <script src="{{url_for('static', filename='javascript/shipper_demo.js')}}"></script>
 {% endif %}
 
@@ -63,7 +63,7 @@
                 <u>Available Actions</u>
             </h3>
             <div class="btn-group-vertical" id="actions">
-                {% if name != "flaskuser" %}
+                {% if name != "user" %}
                 <Button id = "inv_but" type="button" onclick="createInvite()" value="invButton">Create Invite</Button>
                 {% endif %}
                 <Button id = "status" type="button" onclick="getStatus()" value="statusButton">Get Server Status</Button>
@@ -220,18 +220,18 @@
 $(document).ready(function() {
     var name = '{{ name }}'
     var stage = '{{ stage }}'
-    if (name === "flaskuser") {
+    if (name === "user") {
         console.log("user func, ".concat(name, " ", stage))
         getUserActions(stage)
     }
-    else if (name === "flaskvendor") {
+    else if (name === "vendor") {
         console.log("vendor func, ".concat(name, " ", stage))
         getVendorActions(stage)
     }
-    else if (name === "flaskbank") {
+    else if (name === "bank") {
         console.log("bank func, ".concat(name, " ", stage))
         getBankActions(stage)
-    }else if (name === "flaskshipper") {
+    }else if (name === "shipper") {
         console.log("shipper func, ".concat(name, " ", stage))
         getShipperActions(stage)
     }

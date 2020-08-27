@@ -6,6 +6,8 @@ import os
 import sys
 
 
+# not currently used
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
 import runners.support.settings as config
@@ -68,22 +70,22 @@ def request_received(data):
 
 def verified(data):
     log.debug("Verified")
-    if config.role == "flaskvendor":
+    if config.role == "vendor":
         if data["verified"] == "true":
             log.debug("payment proven")
             config.agent_data.payment_proven(config.DEMO_PRODUCT_ID)
 
-    elif config.role == "flaskuser":
+    elif config.role == "user":
         if data["verified"] == "true":
             log.debug("Receipt proven")
             config.agent_data.package_receipt_validated(config.DEMO_PRODUCT_ID)
 
-    elif config.role == "flaskbank":
+    elif config.role == "bank":
         if data["verified"] == "true":
             log.debug("Receipt proven")
             config.agent_data.validate_agreement()
 
-    elif config.role == "flaskshipper":
+    elif config.role == "shipper":
         if data["verified"] == "true":
             log.debug("Receipt proven")
             config.agent_data.ownership_validated()

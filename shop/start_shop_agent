@@ -1,60 +1,53 @@
 #!/bin/bash
-
 shopt -s nocasematch
-
 cd $(dirname $0)
 
 AGENT="$1"
 EXT_LEDGER="$2"
 
+# for initialising with either local von or public von network
 if [ $# -eq 1 ];  then
   LEDGER_URL="http://greenlight.bcovrin.vonx.io"
   echo "using public BCGov test network"
 else
-  echo "Using local development ledger"
+  echo "Using local development ledger. An indy ledger needs to be running locally on port 9000."
   LEDGER_URL="http://${DOCKERHOST}:9000"
 fi
 
 shift
-
 DOCKER_NET="bridge"
-if [ "$AGENT" = "flaskbank" ]; then
-  AGENT_MODULE="flaskbank"
+
+#set ports
+if [ "$AGENT" = "bank" ]; then
+  AGENT_MODULE="bank"
   AGENT_PORT=7030
   AGENT_PORT_RANGE=7030-7033
-elif [ "$AGENT" = "flaskvendor" ]; then
-  AGENT_MODULE="flaskvendor"
+elif [ "$AGENT" = "vendor" ]; then
+  AGENT_MODULE="vendor"
   AGENT_PORT=7040
   AGENT_PORT_RANGE=7040-7043
-elif [ "$AGENT" = "flaskshipper" ]; then
-  AGENT_MODULE="flaskshipper"
+elif [ "$AGENT" = "shipper" ]; then
+  AGENT_MODULE="shipper"
   AGENT_PORT=7050
   AGENT_PORT_RANGE=7050-7053
-elif [ "$AGENT" = "flaskuser" ]; then
-  AGENT_MODULE="flaskuser"
+elif [ "$AGENT" = "user" ]; then
+  AGENT_MODULE="user"
   AGENT_PORT=7060
   AGENT_PORT_RANGE=7060-7063
 else
   exit 1
 fi
 
+#build as per dockerfile requirements
 docker build -q -t transaction-demo -f ../docker/Dockerfile.shop .. || exit 1
 
-
-if [ ! -z "$DOCKERHOST" ]; then
-  export RUNMODE="docker"
-  echo "1"
-elif [ -z "${PWD_HOST_FQDN}" ]; then
-  DOCKERHOST=`docker run --rm --net=host eclipse/che-ip`
-  echo "2"
-  export RUNMODE="docker"
-fi
+DOCKERHOST=`docker run --rm --net=host eclipse/che-ip`
+export RUNMODE="docker"
 
 echo "Host is: {$DOCKERHOST}"
 DOCKER_ENV="-e RUNMODE=${RUNMODE} -e DOCKERHOST=${DOCKERHOST}"
 DOCKER_ENV="${DOCKER_ENV} -e AGENT_PORT=${AGENT_PORT}"
 DOCKER_ENV="${DOCKER_ENV} -e ROLE=${AGENT_MODULE}"
-
 
 echo "LEDGER_URL: ${LEDGER_URL}"
 GENESIS_URL="${LEDGER_URL}/genesis"
@@ -67,9 +60,5 @@ fi
 
 DOCKER=${DOCKER:-docker}
 
-$DOCKER run --name $AGENT --rm -it ${DOCKER_OPTS} \
-  --network=${DOCKER_NET} \
-  -p 0.0.0.0:$AGENT_PORT_RANGE:$AGENT_PORT_RANGE \
-  -v "/$(pwd)/../logs:/home/indy/logs" \
-  $DOCKER_ENV \
-  transaction-demo $AGENT_MODULE --port $AGENT_PORT
+$DOCKER run --name $AGENT --rm -it ${DOCKER_OPTS} --network=${DOCKER_NET} -p 0.0.0.0:$AGENT_PORT_RANGE:$AGENT_PORT_RANGE \
+  -v "/$(pwd)/../logs:/home/indy/logs"  $DOCKER_ENV transaction-demo $AGENT_MODULE --port $AGENT_PORT

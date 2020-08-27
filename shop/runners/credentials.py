@@ -4,6 +4,10 @@ import logging
 import os
 import sys
 
+# blueprint for routes from the credentials page / related
+
+
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
 import runners.support.settings as config
@@ -32,15 +36,15 @@ def issue_credreq():
 
     role = os.getenv("ROLE")
 
-    if role == "flaskbank":
+    if role == "bank":
         logging.debug("MAJOR STAGE: ISSUeING PAYMENT CRED")
         trans.send_payment_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
 
-    elif role == "flaskvendor":
+    elif role == "vendor":
         logging.debug("MAJOR STAGE 4: ISSUEING PACKAGE CRED")
         trans.send_package_cred_offer(config.agent_data.current_connection, config.agent_data.creddefs["package_cred"])
 
-    elif role == "flaskshipper":
+    elif role == "shipper":
         logging.debug("MAJOR STAGE 4: ISSUEING PACKAGE CRED")
         trans.send_package_receipt_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
 
@@ -51,7 +55,7 @@ def prop_cred():
         return make_response({"code": "failure", "reason": "no active connections"})
 
     ##propose payment credential
-    if config.role == "flaskuser":
+    if config.role == "user":
         logging.debug("proposing payment agreement credential")
         payment_creddef = trans.send_payment_agreement_proposal()
 
@@ -63,7 +67,7 @@ def received_package():
 
     if not ob.hasActiveConnection():
         return make_response({"code": "failure", "reason": "no active connections"})
-    if config.role != "flaskshipper":
+    if config.role != "shipper":
         make_response({"code": "not avialable for this agent"}, 500)
 
     creddef_id = config.agent_data.creddefs["received_package"]
@@ -77,7 +81,7 @@ def req_purchase():
     if not ob.hasActiveConnection():
         return make_response({"code": "failure", "reason": "no active connections"})
 
-    if config.role != "flaskuser":
+    if config.role != "user":
         make_response({"code": "not avialable for this agent"}, 500)
     trans.send_payment_agreement_proposal()
     return make_response({"code": "received"})
@@ -87,7 +91,7 @@ def req_purchase():
 def approve_purchase():
     if not ob.hasActiveConnection():
         return make_response({"code": "failure", "reason": "no active connections"})
-    if config.role != "flaskvendor":
+    if config.role != "vendor":
         make_response({"code": "not avialable for this agent"}, 400)
     trans.approve_payment_agreement()
     return make_response({"code": "received"})

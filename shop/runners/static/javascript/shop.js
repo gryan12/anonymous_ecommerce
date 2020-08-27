@@ -82,6 +82,8 @@ function getBankActions(stage) {
         $('#t_stage').append('Role in transaction completed.<br> Successfully issued confirmation of payment to user.')
     }
 }
+
+
 function getShipperActions(stage) {
     if (stage === "start") {
         $('#t_stage').append("Start: awaiting packages...")
@@ -111,19 +113,19 @@ $(document).ready(function() {
     var name = '{{ name }}'
     var stage = '{{ stage }}'
 
-    if (name === "flaskuser") {
+    if (name === "user") {
         console.log("user func, ".concat(name, " ", stage))
         getUserActions(stage)
     }
-    else if (name === "flaskvendor") {
+    else if (name === "vendor") {
         console.log("vendor func, ".concat(name, " ", stage))
         getVendorActions(stage)
     }
-    else if (name === "flaskbank") {
+    else if (name === "bank") {
         console.log("bank func, ".concat(name, " ", stage))
         getBankActions(stage)
 
-    }else if (name === "flaskshipper") {
+    }else if (name === "shipper") {
         console.log("shipper func, ".concat(name, " ", stage))
         getShipperActions(stage)
     }

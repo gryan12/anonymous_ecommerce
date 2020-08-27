@@ -8,6 +8,8 @@ log = logging.getLogger(__name__)
 DEMO_PRODUCT_ID = "asd123f"
 DEMO_PACKAGE_NO = "123456"
 
+# Code which holds state information for each agent.
+# Separate class for each agent state.
 class VendorData:
     def __init__(self):
         self.current_connection = None,
@@ -27,6 +29,7 @@ class VendorData:
         self.package_no = None
         self.transaction_request = None
 
+        # transactions tages
         self.stages = [
             "start",
             "purchase_requested",
@@ -38,6 +41,8 @@ class VendorData:
         ]
         self.stage = 0
 
+
+    ##transaction state functions
 
     def get_stage(self):
         return self.stages[self.stage]
@@ -241,30 +246,32 @@ class ShipperData:
             self.stage += 1
             log.debug("Shipper stage: %s", self.get_stage())
 
+
 def gen_package_no(n=7):
     range_start = 10**(n-1)
     range_end = (10**n)-1
     return str(random.randint(range_start, range_end))
 
 
+# init data
 def setup():
     global agent_data
     global role
     role = os.getenv("ROLE")
 
-    if role == "flaskvendor":
+    if role == "vendor":
         agent_data = VendorData()
 
-    elif role == "flaskuser":
+    elif role == "user":
         agent_data = UserData()
 
-    elif role == "flaskshipper":
+    elif role == "shipper":
         agent_data = ShipperData()
 
-    elif role == "flaskbank":
+    elif role == "bank":
         agent_data = BankData()
 
-
+#globals
 agent_data = None
 role = None
 

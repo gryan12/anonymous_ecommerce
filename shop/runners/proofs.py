@@ -1,4 +1,3 @@
-
 from flask import Flask, Blueprint, render_template, make_response, redirect, request
 import json
 import logging
@@ -11,6 +10,8 @@ import runners.support.settings as config
 import runners.transaction_logic as trans
 
 proofs = Blueprint('proofs', __name__)
+
+# This file contains the blueprint for proof-related interface requests
 
 @proofs.route("/proofs/history", methods=["GET"])
 def get_proof_history():
@@ -27,10 +28,10 @@ def req_proof():
     logging.debug("Has active connection :)")
     role= os.getenv("ROLE")
 
-    if role == "flaskvendor":
+    if role == "vendor":
         trans.request_proof_of_payment()
 
-    elif role == "flaskshipper":
+    elif role == "shipper":
         trans.request_proof_of_ownership()
 
     return make_response({"code": "success"})
@@ -42,13 +43,14 @@ def issue_proof_req():
 
     logging.debug("Has active connection :)")
     role=os.getenv("ROLE")
-    if role == "flaskvendor":
+    if role == "vendor":
         trans.request_proof_of_payment()
 
-    elif role == "flaskshipper":
+    elif role == "shipper":
         trans.request_proof_of_ownership()
 
     return make_response({"code":"success"})
+
 
 @proofs.route("/proofs/payment/propose_proof/", methods=["GET"])
 def prop_proof():
@@ -56,7 +58,7 @@ def prop_proof():
         return make_response({"code": "failure", "reason": "no active connections"})
 
     ##propose proof of payment
-    if config.role == "flaskuser":
+    if config.role == "user":
         logging.debug("proposing proof of payment")
         payment_creddef = trans.get_payment_creddefid()
         if not payment_creddef:
@@ -69,14 +71,13 @@ def prop_proof():
         return make_response({"code": "failed"}, 400)
 
 
-
 @proofs.route("/proofs/shop/dispatch/", methods=["GET"])
 def ready_for_dispatch():
     if not ob.hasActiveConnection():
         return make_response({"code": "failure", "reason": "no active connections"})
 
     ##propose proof of payment
-    if config.role != "flaskvendor":
+    if config.role != "vendor":
         return make_response({"code": "action unavailable for this demo agent"}, 500)
 
     logging.debug("proposing proof of package status")
