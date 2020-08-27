@@ -60,5 +60,7 @@ fi
 
 DOCKER=${DOCKER:-docker}
 
+echo "working directory: $(pwd)"
+
 $DOCKER run --name $AGENT --rm -it ${DOCKER_OPTS} --network=${DOCKER_NET} -p 0.0.0.0:$AGENT_PORT_RANGE:$AGENT_PORT_RANGE \
-  -v "/$(pwd)/../logs:/home/indy/logs"  $DOCKER_ENV transaction-demo $AGENT_MODULE --port $AGENT_PORT
+  -v "/$(pwd)/:/home/indy/shop"  $DOCKER_ENV transaction-demo $AGENT_MODULE --port $AGENT_PORT

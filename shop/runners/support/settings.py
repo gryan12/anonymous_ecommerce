@@ -25,9 +25,13 @@ class VendorData:
         self.proofs = {}
         self.creddefs = {}
         self.transactions = []
+        self.transaction_request = None
+
         self.product_id = None
         self.package_no = None
-        self.transaction_request = None
+        self.transaction_id = None
+        self.payment_endpoint = None
+
 
         # transactions tages
         self.stages = [
@@ -67,10 +71,12 @@ class VendorData:
             self.stage += 1
             log.debug("Vendor at stage: %s", self.get_stage())
 
-    def receipt_confirmed(self):
+    def receipt_confirmed(self, package_no=DEMO_PACKAGE_NO):
         if self.stage == 4:
             self.stage += 1
             log.debug("Vendor at stage: %s", self.get_stage())
+            self.package_no = package_no
+            log.debug("receipt confirmed for package: %s", package_no)
             log.debug("======UV: Receipt Credential Received for package: %s", )
 #
     def receipt_proven(self):

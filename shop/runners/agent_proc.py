@@ -18,6 +18,8 @@ def start_aries(start_port, seed, label, genesis_url=None):
     endpoint = "http://" + host + ":" + str(start_port)
     webhook_url = "http://" + "0.0.0.0" + ":" + str(start_port + 2) + "/webhooks"
 
+    os.environ["AGENT_RUNNING"] = "1"
+
     args = [
         "--endpoint", endpoint,
         "--label", label,

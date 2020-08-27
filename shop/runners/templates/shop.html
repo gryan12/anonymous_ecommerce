@@ -10,16 +10,16 @@
 <script src="{{url_for('static', filename='javascript/shop.js')}}"></script>
 <script src="{{url_for('static', filename='javascript/shipper_demo.js')}}"></script>
 
-{% if name == "user" %}
+{% if name == "User" %}
     <script src="{{url_for('static', filename='javascript/user_demo.js')}}"></script>
 {% endif %}
-{% if name == "vendor" %}
+{% if name == "Vendor" %}
     <script src="{{url_for('static', filename='javascript/vendor_demo.js')}}"></script>
 {% endif %}
-{% if name == "bank" %}
+{% if name == "Bank" %}
     <script src="{{url_for('static', filename='javascript/bank_demo.js')}}"></script>
 {% endif %}
-{% if name == "bank" %}
+{% if name == "Shipper" %}
 <script src="{{url_for('static', filename='javascript/shipper_demo.js')}}"></script>
 {% endif %}
 
@@ -63,7 +63,7 @@
                 <u>Available Actions</u>
             </h3>
             <div class="btn-group-vertical" id="actions">
-                {% if name != "user" %}
+                {% if name != "User" %}
                 <Button id = "inv_but" type="button" onclick="createInvite()" value="invButton">Create Invite</Button>
                 {% endif %}
                 <Button id = "status" type="button" onclick="getStatus()" value="statusButton">Get Server Status</Button>

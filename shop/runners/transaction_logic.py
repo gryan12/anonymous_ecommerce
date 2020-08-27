@@ -473,15 +473,19 @@ def have_receieved_proof_proposal(schema_name=None):
     return False
 
 
+#extract value from credential
 def get_cred_attr_value(name, offer):
-    attributes = offer["credential_proposal_dict"]["credential_preview"]["attributes"]
+    attributes = offer["credential_proposal_dict"]["credential_proposal"]["attributes"]
     for attr in attributes:
         if attr["name"] == name:
             return attr["value"]
     return False
 
-
 def gen_package_no(n=7):
     range_start = 10**(n-1)
     range_end = (10**n)-1
     return str(random.randint(range_start, range_end))
+
+
+def parse_payment_endpoint(data):
+    get_cred_attr_value("", data)

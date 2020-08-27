@@ -60,6 +60,7 @@ def issue_cred():
 
     # ISSUER state
     if state == "proposal_received":
+
         if config.role == "vendor":
             log.debug("proposal received as vendor")
             product_id = get_cred_proposal_value(data, "product_id")
@@ -71,7 +72,6 @@ def issue_cred():
             }
             if amount:
                 config.agent_data.transaction_request["amount"] = amount
-
             trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id)
             config.agent_data.incoming_transaction()
 
@@ -82,10 +82,7 @@ def issue_cred():
     elif state == "offer_received":
         ob.send_cred_request(data["credential_exchange_id"])
 
-    elif state == "request_sent":
-        log.debug("request sent")
-
-    # both issuer and holder state
+    #issuer state
     elif state == "request_received":
         cred_preview = config.agent_data.previews[data["credential_definition_id"]]
         schema_name = trans.get_schema_name(data["credential_definition_id"])
@@ -97,18 +94,17 @@ def issue_cred():
             }
 
         if config.agent_data.agent_role == "user":
+            logging.debug("request received as user?")
             if schema_name == "payment_agreement":
                 config.agent_data.approved_transaction()
 
-           # elif schema_name == "package_cred":
-           #     #package_no = trans.get_cred_attr_value("package_no", data)
-           #     config.agent_data.package_shipped()
 
         elif config.agent_data.agent_role == "bank":
             cred = {
                 "comment": "issuance of package credential",
                 "credential_preview": cred_preview
             }
+
 
         elif config.agent_data.agent_role == "shipper":
             cred = {
@@ -119,31 +115,36 @@ def issue_cred():
         resp = ob.issue_credential(data["credential_exchange_id"], cred)
 
     elif state == "credential_received":
-        config.agent_data.credentials.append(
-            {
-                data["connection_id"]: data["credential_definition_id"]
-            }
-        )
+
+        #config.agent_data.credentials.append(
+        #    {
+        #        data["connection_id"]: data["credential_definition_id"]
+        #    }
+        #)
+
         log.debug("Stored credential of id: %s", data["credential_definition_id"])
 
         if config.role == "vendor":
-           # print("===========cred rec test============")
-           # pretty_print_obj(data)
-           # package_no = trans.get_cred_attr_value("package_no", data)
-           # print("=======received cred with package no: ", package_no)
-            config.agent_data.receipt_confirmed()
+            #todo PARSE PACKAGE NUMBER
+            package_no = trans.get_cred_attr_value("package_no", data)
+            config.agent_data.receipt_confirmed(package_no)
 
         elif config.role == "user":
             schema_name = trans.get_schema_name(data["credential_definition_id"])
             print("-=======schema name: ", schema_name)
 
             if schema_name == "payment_agreement":
+                pretty_print_obj(schema_name)
+
+                #todo PARSE PAYMENT ENDPOINT
                 config.agent_data.received_agreement_cred()
 
             elif schema_name == "payment_credential":
+                #todo PARSE TRANSACTION_ID
                 config.agent_data.payment_credential_received()
 
             elif schema_name == "package_cred":
+                #todo PARSE PACKAGE NUMBER
                 config.agent_data.package_credential_received()
 
     elif state == "credential_issued":
@@ -157,7 +158,6 @@ def issue_cred():
             config.agent_data.receipt_issued()
 
         if config.role == "vendor":
-
             if schema_name == "package_cred":
                 config.agent_data.package_shipped()
             else:

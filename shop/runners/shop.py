@@ -18,9 +18,9 @@ def render_shop_actions():
     stage = config.agent_data.get_stage()
     if config.agent_data.has_public:
         did = get_public_did()
-        return render_template('shop.html', name=config.role, stage=stage, did=did)
+        return render_template('shop.html', name=config.role.capitalize(), stage=stage, did=did)
     else:
-        return render_template('shop.html', name=config.role, stage=stage)
+        return render_template('shop.html', name=config.role.capitalize(), stage=stage)
 
 
 def get_public_did():

@@ -35,24 +35,24 @@
   <div class="container">
       <div class="col-sm-4">
           <h3><u>Actions</u></h3>
-          {% if name == "vendor" %}
+          {% if name == "Vendor" %}
           <button class="btn btn-primary" id="propose_dispatch" onclick="proposeProofOfDispatch()">Propose Proof of Dispatch </button>
           {% endif %}
-          {% if name == "shipper" %}
+          {% if name == "Shipper" %}
           {% endif %}
-          {% if name == "user" %}
+          {% if name == "User" %}
           <button class="btn btn-primary" id="propose_proof_payment" onclick="proposeProofOfPayment()">Propose Proof of Purchase </button>
           <button class="btn btn-primary" id="propose_proof_payment_agreement" onclick="proposeProofOfPaymentAgreement()"> Make payment (Proof of agreement) </button>
           <button class="btn btn-primary" id="propose_proof_of_ownership" onclick="proposeProofOfOwnership()"> Propose proof of ownership</button>
           {% endif %}
 
-          {% if name != "bank" %}
+          {% if name != "Bank" %}
           <button class="btn btn-primary" id="issue_proof" onclick="requestProof()">
-              {% if name == "vendor" %}
+              {% if name == "Vendor" %}
               Request Proof of Payment
-              {% elif name =="shipper" %}
+              {% elif name =="Shipper" %}
               Request Proof of Package Ownership
-              {% elif name =="user" %}
+              {% elif name =="User" %}
               Request Proof of Package Status
               {% endif %}
           </button>

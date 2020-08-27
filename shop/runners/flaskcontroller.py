@@ -36,7 +36,7 @@ def red():
 
 @app.route("/home/", methods=["GET"])
 def render_interface():
-    name = os.getenv("ROLE")
+    name = os.getenv("ROLE").capitalize()
     if config.agent_data.has_public:
         did = get_public_did()
         return render_template("interface.html", name=name, did=did)
@@ -45,7 +45,7 @@ def render_interface():
 
 @app.route("/home/connections", methods=["GET"])
 def render_connections():
-    name = os.getenv("ROLE")
+    name = os.getenv("ROLE").capitalize()
     return render_template("connections.html", name=name)
 
 @app.route("/home/connections", methods=["POST"])
@@ -59,12 +59,12 @@ def set_active_connection():
     )
 @app.route("/home/proofs", methods=["GET"])
 def render_proofs():
-    name = os.getenv("ROLE")
+    name = os.getenv("ROLE").capitalize()
     return render_template("proofs.html", name=name)
 
 @app.route("/home/credentials", methods=["GET"])
 def render_credentials():
-    name = os.getenv("ROLE")
+    name = os.getenv("ROLE").capitalize()
     return render_template("credentials.html", name=name)
 
 @app.route("/status/", methods=["GET"])
@@ -210,14 +210,15 @@ def getStageAndRole(credex_id):
     return ob.get_cred_ex_record(credex_id)
 
 
-
 def main():
-
     # get agent details from osenv, set in start_shop_agent script
     start_port = int(os.getenv("AGENT_PORT"))
     agent_role = os.getenv("ROLE")
     config.agent_data.agent_role = agent_role
     host = os.getenv("DOCKERHOST")
+
+    if os.getenv("AGENT_RUNNING"):
+        logging.debug("AGENT IS ALREADY RUNNING")
 
     ledger_url = os.getenv("LEDGER_URL")
     if not ledger_url:
