@@ -139,6 +139,8 @@ def build_proof_request(name=None, version=None):
 def build_proof_proposal(comment="Proposal of proof"):
     return ProofReqBuilder()
 
+# for constructing proof request json objects.
+# follows c++ builder pattern. not sure how python that is
 class ProofReqBuilder:
     def __init__(self, name=None, version= None):
         self.attributes = []
@@ -238,7 +240,6 @@ class ProofReqBuilder:
         return web_req
 
 
-    #todo make cleaner, include optional fields
     def build_proposition(self):
         presentation_preview = {
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview",
@@ -257,8 +258,6 @@ class ProofReqBuilder:
 def build_proof_proposal(name=None):
     return ProofPropositionBuilder(name)
 
-
-
 class ProofPropositionBuilder:
 
     def __init__(self, name=None):
@@ -274,25 +273,20 @@ class ProofPropositionBuilder:
         }
         if cred_def_id:
             attribute["cred_def_id"] = cred_def_id
-
         if value:
             attribute["value"] = value
-
         if cred_def_id and referent:
             attribute["referent"] = referent
-
         self.attrs.append(attribute)
         return self
 
     def withPredicate(self, name, threshold, cred_def_id=None, predicate=">="):
-
         predicate = {
             "name": name,
             "cred_def_id": cred_def_id,
             "predicate": predicate,
             "threshold": threshold
         }
-
         self.preds.append(predicate)
         return self
 

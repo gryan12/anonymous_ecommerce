@@ -192,10 +192,8 @@ def flask_proc(host, port, debug=False):
 
 def hasActiveConnection():
     resp = ob.get_connections()
-
     if not resp:
         return False
-
     states = [
         x['state'] for x in resp['results']
     ]

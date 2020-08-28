@@ -65,7 +65,7 @@ def send_payment_agreement_cred_offer(conn_id, creddef_id, product_id, value="50
     return ob.send_cred_offer(offer_req)
 
 #User -> Bank
-def propose_proof_of_payment_agreement(connection_id, cred_def_id):
+def propose_proof_of_payment_agreement(connection_id, cred_def_id, product_id=None):
     proposal = build_proof_proposal(
         "proof_of_payment_agreement"
     ).withAttribute(
@@ -92,7 +92,6 @@ def propose_proof_of_payment(connection_id, cred_def_id=None):
         cred_def_id
     ).build(connection_id, comment="wanna prove payhment")
     return ob.send_proof_proposal(proposal)
-
 
 
 def refuse_payment_agreement(conn_id, creddef_id):
@@ -480,6 +479,11 @@ def get_cred_attr_value(name, offer):
         if attr["name"] == name:
             return attr["value"]
     return False
+
+
+def get_cred_attrs(offer):
+    return offer["credential_proposal_dict"]["credential_proposal"]["attributes"]
+
 
 def gen_package_no(n=7):
     range_start = 10**(n-1)

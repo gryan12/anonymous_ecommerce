@@ -57,10 +57,8 @@ def issue_cred():
     data = json.loads(request.data)
     state = data["state"]
     log.debug("issue cred with state: %s", state)
-
     # ISSUER state
     if state == "proposal_received":
-
         if config.role == "vendor":
             log.debug("proposal received as vendor")
             product_id = get_cred_proposal_value(data, "product_id")
@@ -115,18 +113,17 @@ def issue_cred():
         resp = ob.issue_credential(data["credential_exchange_id"], cred)
 
     elif state == "credential_received":
-
         #config.agent_data.credentials.append(
         #    {
         #        data["connection_id"]: data["credential_definition_id"]
         #    }
         #)
-
         log.debug("Stored credential of id: %s", data["credential_definition_id"])
 
         if config.role == "vendor":
             #todo PARSE PACKAGE NUMBER
             package_no = trans.get_cred_attr_value("package_no", data)
+            log.debug("receipt confirmed for package: %s", package_no)
             config.agent_data.receipt_confirmed(package_no)
 
         elif config.role == "user":
@@ -134,17 +131,28 @@ def issue_cred():
             print("-=======schema name: ", schema_name)
 
             if schema_name == "payment_agreement":
-                pretty_print_obj(schema_name)
+                pretty_print_obj(data)
+                amount = get_cred_proposal_value(data, "amount")
+                endpoint = get_cred_proposal_value(data, "payment_endpoint")
+                ##endparse
 
-                #todo PARSE PAYMENT ENDPOINT
+                logging.debug("Recevied payment credential for endpoint: %s, and amount: %s", endpoint, amount)
                 config.agent_data.received_agreement_cred()
 
             elif schema_name == "payment_credential":
+                pretty_print_obj(data)
                 #todo PARSE TRANSACTION_ID
+                transaction_id = get_cred_proposal_value(data, "transaction_no")
+                logging.debug("Recevied payment t_id: %s", transaction_id)
                 config.agent_data.payment_credential_received()
 
             elif schema_name == "package_cred":
                 #todo PARSE PACKAGE NUMBER
+                pretty_print_obj(data)
+
+                package_no = get_cred_proposal_value(data, "package_no")
+                logging.debug("Rceived receipt package credential containing package no: %s", package_no)
+
                 config.agent_data.package_credential_received()
 
     elif state == "credential_issued":
@@ -177,8 +185,8 @@ def present_proof():
     #pretty_print_obj(data)
 
     if state == "proposal_received":
-        proposal = data["presentation_proposal_dict"]["presentation_proposal"]
 
+        proposal = data["presentation_proposal_dict"]["presentation_proposal"]
         pretty_print_obj(data)
         try:
             creddef_id = proposal["attributes"][0]["cred_def_id"]
@@ -214,6 +222,10 @@ def present_proof():
     elif state == "presentation_received":
         proof = ob.verify_presentation(presex_id)
         log.debug("Verification result is: %s", proof["verified"])
+        print("=====================Presentation")
+        pretty_print_obj(data["presentation"]["requested_proof"])
+        endpoint = get_received_presentation_values(data, "payment_endpoint")
+        print("===========endpoint: ", endpoint)
 
     elif state == "presentation_sent":
         name = data["presentation_request"]["name"]
@@ -319,7 +331,7 @@ def catch(topicname):
 
 # for aesthetic printing of json objects
 def pretty_print_obj(json_dict):
-    pretty = json.dumps(json_dict, indent=2)
+    pretty = json.dumps(json_dict, indent=4)
     print(pretty)
     return pretty
 
@@ -332,6 +344,7 @@ def get_proposal_value(proposal, attr_name):
             if attr["name"] == attr_name:
                 return attr["value"]
 
+
 # get the value of a given attr_name from a crdential proposal, a json object
 def get_cred_proposal_value(proposal, attr_name):
     if "credential_proposal_dict" in proposal:
@@ -339,4 +352,13 @@ def get_cred_proposal_value(proposal, attr_name):
         for attr in attrs:
             if attr["name"] == attr_name:
                 return attr["value"]
+    return False
+
+def get_received_presentation_values(proposal, attr_name):
+    if "presentation" in proposal:
+        if "requested_proof" in proposal["presentation"]:
+            for attr in proposal["presentation"]["requested_proof"]["revealed_attrs"]:
+                if attr_name in attr:
+                    print(attr_name)
+                    return proposal["presentation"]["requested_proof"]["revealed_attrs"][attr]["raw"]
     return False

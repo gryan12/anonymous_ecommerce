@@ -86,152 +86,22 @@
     </div>
 </div>
 </div>
-
-
-<!--div class="container">
-      <div class="col-sm-6" id="second">
-          <h2>Current Transaction Stage<br> </h2>
-          <h3 id="t_stage">Current Transaction Stage<br> </h3>
-      </div>
-      <div class="col-sm-6" id="">
-          <h3><u>Demo Actions</u></h3>
-          <div class="btn-group-vertical" id="actions"></div>
-      </div>
-  </div-->
-<!--
-<script>
-    function getUserActions(stage) {
-        if (stage === "start") {
-            $('#t_stage').append("Start: Make Purchase Request")
-            $('#actions').append('<button type="button" onclick = "requestPurchase()">Purchase Item</button>')
-        }
-
-        else if (stage === "agreement_proposed") {
-            $('#t_stage').append('Requested purchase: awaiting response')
-        }
-
-        else if (stage === "agreement_received") {
-            $('#t_stage').append('Purchase approved, next step: Payment')
-            $('#actions').append ('<button type="button" onclick = "proposeProofOfPaymentAgreement()">Make Payment</button>')
-        }
-
-        else if (stage === "payment_agreement_proven") {
-            $('#t_stage').append('Payment in process; awaiting bank response')
-        }
-
-        else if (stage === "payment_credential_received") {
-            $('#t_stage').append('Payment made.<br>Next step: proving payment to vendor')
-            $('#actions').append('<button type="button" onclick = "proposeProofOfPayment()">Prove Payment to Vendor</button>')
-        }
-
-        else if (stage === "payment_credential_proven") {
-            $('#t_stage').append('Received package number.<br>Awaiting proof of receipt')
-        }
-
-        else if (stage === "package_credential_received") {
-            $('#t_stage').append('Received package credential. <br> Awaiting proof of receipt')
-        }
-
-        else if (stage === "package_receipt_validated") {
-            $('#t_stage').append('Proven dispatch.<br> Next stage: prove ownership to shipper')
-            $('#actions').append('<button type="button" onclick = "proposeProofOfOwnership()">Prove Package Ownership</button>')
-        }
-
-        else if (stage === "completed") {
-            $('#t_stage').append('Transaction completed')
-        }
-    }
-</script>
-<script>
-    function getVendorActions(stage) {
-    if (stage === "start") {
-        $('#t_stage').append("Start: awaiting purchase request")
-    }
-
-    else if (stage === "purchase_requested") {
-        $('#t_stage').append('Requested purchase: automatically agreeing...')
-    }
-
-    else if (stage === "purchase_approved") {
-        $('#t_stage').append('Purchase approved, awaiting proof of payment')
-    }
-
-    else if (stage === "payment_proven") {
-        $('#t_stage').append('Payment proven. <br> Packaging goods...')
-        $('#actions').append('<button type="button" onclick = "issueCredential()">Issue Package Credential</button>')
-    }
-
-    else if (stage === "package_shipped") {
-    $('#t_stage').append('Package shipped. Awaiting confirmatoin of receipt by shipping service')
-    }
-
-    else if (stage === "receipt_confirmed") {
-        $('#t_stage').append('Shipper has received package. <br> Next stage: prove to user that package at shipping service')
-        $('#actions').append('<button type="button" onclick = "proposeProofOfDispatch()">Prove Package Status to User</button>')
-    }
-
-    else if (stage === "completed") {
-        $('#t_stage').append('Vendors role in the transaction has been completed')
-    }
-    }
-</script>
-<script>
-    function getBankActions(stage) {
-    if (stage === "start") {
-        $('#t_stage').append("Start: awaiting proof of payment agreement")
-    }
-
-    else if (stage === "purchase_requested") {
-        $('#t_stage').append('Agreement validated. <br> Next stage: issue payment credential')
-        $('#actions').append('<button type="button" onclick = "issueCredential()">Issue Package Credential</button>')
-    }
-    }
-</script>
-    <script>
-    function getShipperActions(stage) {
-    if (stage === "start") {
-        $('#t_stage').append("Start: awaiting packages...")
-        $('#actions').append('<button type="button" onclick = "issueCredential()">Send Receipt Credential</button>')
-    }
-
-    else if (stage === "receipt_issued") {
-        $('#t_stage').append('Crednetial issued: awaiting proof of ownership of package')
-    }
-    else if (stage === "completed") {
-        $('#t_stage').append('Transaction completed! Shipping...')
-    }
-
-    }
-</script>
-<script>
-    function get(stage) {
-    if (stage === "start") {
-        $('#t_stage').append("Start: awaiting proof of payment agreement")
-    }
-
-    else if (stage === "purchase_requested") {
-        $('#t_stage').append('Agreement validated. <br> Next stage: issue payment credential')
-        $('#actions').append('<button type="button" onclick = "issueCredential()">Issue Package Credential</button>')
-    }
-    }
-</script>
--->
 <script>
 $(document).ready(function() {
     var name = '{{ name }}'
     var stage = '{{ stage }}'
-    if (name === "user") {
+    if (name === "User") {
         console.log("user func, ".concat(name, " ", stage))
         getUserActions(stage)
     }
-    else if (name === "vendor") {
+    else if (name === "Vendor") {
         console.log("vendor func, ".concat(name, " ", stage))
         getVendorActions(stage)
     }
-    else if (name === "bank") {
+    else if (name === "Bank") {
         console.log("bank func, ".concat(name, " ", stage))
         getBankActions(stage)
-    }else if (name === "shipper") {
+    }else if (name === "Shipper") {
         console.log("shipper func, ".concat(name, " ", stage))
         getShipperActions(stage)
     }

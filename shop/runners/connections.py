@@ -3,10 +3,7 @@ import json
 import logging
 import os
 import sys
-
-
 # blueprint for handling requests from the connections tab / related
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
 import runners.support.settings as config
@@ -19,7 +16,6 @@ def make_inv():
     resp = ob.create_invite()
     return make_response(json.dumps(resp["invitation"]), 200)
 
-
 @connections.route("/connections/current/", methods=["POST"])
 def set_current_conn():
     data = request.json
@@ -28,6 +24,13 @@ def set_current_conn():
             config.agent_data.current_connection = data["selected_connection"]
     return redirect(request.referrer)
 
+#@connections.route("/connections/current/", methods=["GET"])
+#def get_current_conn():
+#    if not ob.hasActiveConnection():
+#        resp = {"connection": "none"}
+#    else
+#        resp = {""}
+#
 @connections.route("/connections/receive_invite/", methods=["POST"])
 def rec_inv():
     invdict = request.form.to_dict()
@@ -55,6 +58,7 @@ def get_active_conns():
         current = config.agent_data.current_connection
 
     conn_details = ob.get_connection_details(current)
+
     if not conn_details:
         return make_response({"result": "no active connections"})
 
