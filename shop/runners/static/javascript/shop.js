@@ -1,4 +1,7 @@
 function getUserActions(stage) {
+
+        details = getTransactionDetails()
+
         if (stage === "start") {
             $('#t_stage').append("Start: make purchase request")
             $('#actions').append('<button type="button" onclick = "requestPurchase()">Purchase Item</button>')
@@ -88,10 +91,12 @@ function getShipperActions(stage) {
     if (stage === "start") {
         $('#t_stage').append("Start: awaiting packages...")
         $('#actions').append('<button type="button" onclick = "issueCredential()">Send Receipt Credential</button>')
+        $('#package_form').append('<br><label for="pack_no"> Input Package Number </label> ' +
+                                  '<input type="text" id="pack_no"/><button type="submit">Submit</button>')
     }
 
     else if (stage === "receipt_issued") {
-        $('#t_stage').append('Crednetial issued: awaiting proof of ownership of package')
+        $('#t_stage').append('Credential issued: awaiting proof of ownership of package')
     }
     else if (stage === "completed") {
         $('#t_stage').append('Transaction completed! Shipping...')
@@ -180,4 +185,17 @@ $(document).ready(function(){
 
 function reload() {
     setTimeout(location.reload.bind(location), 60000);
+}
+
+function getTransactionDetails() {
+    console.log("transaction req")
+    $.ajax({ url: "/home/shop/transaction",
+        context: document.body,
+        dataType:'json',
+        success: function(response){
+           var results = response
+           for (var i= 0; i < results.length; i++) {
+               console.log(results[i])
+           }
+    }});
 }

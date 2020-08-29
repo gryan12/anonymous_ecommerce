@@ -22,6 +22,29 @@ def render_shop_actions():
     else:
         return render_template('shop.html', name=config.role.capitalize(), stage=stage)
 
+# for when the shipping service received a package
+@shop.route("/home/shop/package/input", methods=["POST"])
+def input_package_no():
+    if config.role != "shipper":
+        return make_response({"code":"not allowed for this agent"}, 404)
+
+    package_data = request.data.decode("utf-8")
+
+    if len(package_data) > 8:
+        number = package_data.split("=")[1].strip()
+        config.agent_data.update_package_no(number)
+        return make_response({"code": "package number received"}, 200)
+    else:
+        return make_response({"code":"no number submitted"}, 200)
+
+@shop.route("/home/shop/transaction", methods=["GET"])
+def get_state():
+    value_dict = config.get_transaction_values()
+    print(value_dict)
+    if not value_dict:
+        return make_response({"code": "starting state"})
+    else:
+        make_response(json.loads(value_dict), 200)
 
 def get_public_did():
     resp = ob.get_public_did()
@@ -30,3 +53,4 @@ def get_public_did():
         return res["did"]
     else:
         return None
+

@@ -68,12 +68,18 @@
                 {% endif %}
                 <Button id = "status" type="button" onclick="getStatus()" value="statusButton">Get Server Status</Button>
             </div>
+            {% if name == "Shipper" %}
+            <form action="/home/shop/package/input" method="post" id="pack_form">
+                <div id="package_form" class="form-group">
+                </div>
+            </form>
+            {% endif %}
         </div>
         <div id = "inputstuff">
             <h3>
                 Paste invitation JSON:
             </h3>
-            <form action="/connections/receive_invite" id="invForm"  name=inviteForm method="post" enctype="multipart/form-data">
+            <form action="/connections/receive_invite" id="invForm"  name=inviteForm method="post" >
                 <div class="form-group">
                     <label for="invite_area">Paste Invite JSON</label>
                     <input class="form-control input-lg" id="invite_area" name="invite">
@@ -105,6 +111,28 @@ $(document).ready(function() {
         console.log("shipper func, ".concat(name, " ", stage))
         getShipperActions(stage)
     }
+})
+</script>
+<script>
+    $("#pack_form").submit(function(e) {
+    console.log("Testing_one")
+    e.preventDefault(); // avoid to execute the actual submit of the form.
+    var form = $(this);
+    var package = document.getElementById('pack_no').value
+    var package_data = {"package_no": package}
+    var url = form.attr('action');
+    $.ajax({
+           type: "POST",
+           url: url,
+           dataType: 'json',
+           contentType: 'application/json',
+           data: package_data,
+           success: function(data)
+           {
+                location.reload(true)
+                console.log("success")
+           }
+         });
 })
 </script>
 </body>

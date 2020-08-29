@@ -37,7 +37,7 @@ def issue_credreq():
     role = os.getenv("ROLE")
 
     if role == "bank":
-        logging.debug("MAJOR STAGE: ISSUeING PAYMENT CRED")
+        logging.debug("MAJOR STAGE: ISSUING PAYMENT CRED")
         trans.send_payment_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
 
     elif role == "vendor":
@@ -46,9 +46,11 @@ def issue_credreq():
 
     elif role == "shipper":
         logging.debug("MAJOR STAGE 4: ISSUEING PACKAGE CRED")
-        trans.send_package_receipt_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id)
+        trans.send_package_receipt_cred_offer(config.agent_data.current_connection, config.agent_data.creddef_id, config.agent_data.get_package_no())
 
     return make_response({"code":"success", "role": role}, 200)
+
+
 @credentials.route("/credentials/propose/", methods=["GET"])
 def prop_cred():
     if not ob.hasActiveConnection():
@@ -57,10 +59,13 @@ def prop_cred():
     ##propose payment credential
     if config.role == "user":
         logging.debug("proposing payment agreement credential")
-        payment_creddef = trans.send_payment_agreement_proposal()
+        ##todo implement input through web
+        product_id = trans.gen_product_id()
+        trans.send_payment_agreement_proposal(product_id)
 
-    return make_response({"code": "received"})
+        return make_response({"code": "received"})
 
+    return make_response({"code": "failure", "reason": "Error in proposing agreement"})
 
 @credentials.route("/credentials/shop/received_package/", methods=["GET"])
 def received_package():
@@ -83,7 +88,11 @@ def req_purchase():
 
     if config.role != "user":
         make_response({"code": "not avialable for this agent"}, 500)
-    trans.send_payment_agreement_proposal()
+
+    ##todo implement input through web
+    product_id = trans.gen_product_id()
+
+    trans.send_payment_agreement_proposal(product_id)
     return make_response({"code": "received"})
 
 

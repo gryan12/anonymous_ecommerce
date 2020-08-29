@@ -71,7 +71,7 @@ def issue_cred():
             if amount:
                 config.agent_data.transaction_request["amount"] = amount
             trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id)
-            config.agent_data.incoming_transaction()
+            config.agent_data.incoming_transaction(product_id)
 
     elif state == "proposal_sent":
         if config.role == "user":
@@ -93,7 +93,10 @@ def issue_cred():
 
         if config.agent_data.agent_role == "user":
             logging.debug("request received as user?")
+
             if schema_name == "payment_agreement":
+                #todo parse
+                pretty_print_obj(data)
                 config.agent_data.approved_transaction()
 
 
@@ -109,7 +112,6 @@ def issue_cred():
                 "comment": "cred offer",
                 "credential_preview": cred_preview
             }
-
         resp = ob.issue_credential(data["credential_exchange_id"], cred)
 
     elif state == "credential_received":
@@ -131,31 +133,31 @@ def issue_cred():
             print("-=======schema name: ", schema_name)
 
             if schema_name == "payment_agreement":
-                pretty_print_obj(data)
+                #pretty_print_obj(data)
                 amount = get_cred_proposal_value(data, "amount")
                 endpoint = get_cred_proposal_value(data, "payment_endpoint")
                 ##endparse
 
                 logging.debug("Recevied payment credential for endpoint: %s, and amount: %s", endpoint, amount)
-                config.agent_data.received_agreement_cred()
+                config.agent_data.received_agreement_cred(amount, endpoint)
 
             elif schema_name == "payment_credential":
-                pretty_print_obj(data)
+                #pretty_print_obj(data)
                 #todo PARSE TRANSACTION_ID
                 transaction_id = get_cred_proposal_value(data, "transaction_no")
                 logging.debug("Recevied payment t_id: %s", transaction_id)
-                config.agent_data.payment_credential_received()
+                config.agent_data.payment_credential_received(transaction_id)
 
             elif schema_name == "package_cred":
                 #todo PARSE PACKAGE NUMBER
-                pretty_print_obj(data)
+                #pretty_print_obj(data)
 
                 package_no = get_cred_proposal_value(data, "package_no")
                 logging.debug("Rceived receipt package credential containing package no: %s", package_no)
-
-                config.agent_data.package_credential_received()
+                config.agent_data.package_credential_received(package_no)
 
     elif state == "credential_issued":
+
         schema_name = trans.get_schema_name(data["credential_definition_id"])
         log.debug("Issued credential, of schema name : %s", schema_name)
 
@@ -167,6 +169,7 @@ def issue_cred():
 
         if config.role == "vendor":
             if schema_name == "package_cred":
+                pretty_print_obj(data)
                 config.agent_data.package_shipped()
             else:
                 config.agent_data.approved_transaction()
@@ -222,16 +225,15 @@ def present_proof():
     elif state == "presentation_received":
         proof = ob.verify_presentation(presex_id)
         log.debug("Verification result is: %s", proof["verified"])
-        print("=====================Presentation")
-        pretty_print_obj(data["presentation"]["requested_proof"])
-        endpoint = get_received_presentation_values(data, "payment_endpoint")
-        print("===========endpoint: ", endpoint)
+       # endpoint = get_received_presentation_values(data, "payment_endpoint")
+       # print("===========endpoint: ", endpoint)
 
     elif state == "presentation_sent":
         name = data["presentation_request"]["name"]
         print("identifiers: ", data["presentation"]["identifiers"])
         identifiers = data["presentation"]["identifiers"][0]
         log.debug("==presentation sent")
+        pretty_print_obj(data)
 
         if config.role == "vendor":
             config.agent_data.receipt_proven()
@@ -241,13 +243,13 @@ def present_proof():
 
         if config.role == "user":
             if name == "proof of payment" or "payment_credential" in identifiers["schema_id"]:
-                config.agent_data.payment_credential_proven(config.DEMO_PRODUCT_ID)
+                config.agent_data.payment_credential_proven()
 
             elif name == "proof of payment agreement" or "payment_agreement" in identifiers["schema_id"]:
-                config.agent_data.payment_agreement_proven(config.DEMO_PRODUCT_ID)
+                config.agent_data.payment_agreement_proven()
 
             elif name == "proof of dispatch" or "package_cred" in identifiers["schema_id"]:
-                config.agent_data.package_ownership_proven(config.DEMO_PRODUCT_ID)
+                config.agent_data.package_ownership_proven()
 
     ## upon receving a request, send a proof presentation
     elif state == "request_received":
@@ -298,22 +300,32 @@ def present_proof():
         if config.role == "vendor":
             if data["verified"] == "true":
                 log.debug("payment proven")
-                config.agent_data.payment_proven()
+                transaction_id = get_received_presentation_values(data, "transaction_no")
+                log.debug("=========transaction id: %s", transaction_id)
+
+                config.agent_data.payment_proven(transaction_id)
 
         elif config.role == "user":
             if data["verified"] == "true":
                 log.debug("Receipt proven")
-                config.agent_data.package_receipt_validated(config.DEMO_PRODUCT_ID)
+                ##todo confirm
+                package_no = get_received_presentation_values(data, "package_no")
+                config.agent_data.package_receipt_validated(package_no)
 
         elif config.role == "bank":
             if data["verified"] == "true":
                 log.debug("Receipt proven")
-                config.agent_data.validate_agreement()
+                endpoint = get_received_presentation_values(data, "payment_endpoint")
+                print("===========endpoint: ", endpoint)
+                config.agent_data.validate_agreement(endpoint)
+
 
         elif config.role == "shipper":
             if data["verified"] == "true":
                 log.debug("Receipt proven")
-                config.agent_data.ownership_validated()
+                package_no = get_received_presentation_values(data, "package_no")
+                log.debug("=========Package no: %s", package_no)
+                config.agent_data.ownership_validated(package_no)
 
     return make_response(json.dumps({"code":"success"}), 200)
 

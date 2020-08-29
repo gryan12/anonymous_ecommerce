@@ -30,7 +30,7 @@ CRED_NAMES = [
 
 ##User
 #User -> Vendor
-def send_payment_agreement_proposal(product_id = config.DEMO_PRODUCT_ID):
+def send_payment_agreement_proposal(product_id=config.DEMO_PRODUCT_ID):
     proposal = {
        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
        "attributes": [
@@ -65,7 +65,7 @@ def send_payment_agreement_cred_offer(conn_id, creddef_id, product_id, value="50
     return ob.send_cred_offer(offer_req)
 
 #User -> Bank
-def propose_proof_of_payment_agreement(connection_id, cred_def_id, product_id=None):
+def propose_proof_of_payment_agreement(connection_id, cred_def_id):
     proposal = build_proof_proposal(
         "proof_of_payment_agreement"
     ).withAttribute(
@@ -115,9 +115,13 @@ def request_proof_of_payment_agreement(creddef_id = None):
 #### Stage 2: Payment;
 #Bank -> User
 def send_payment_cred_offer(conn_id, creddef_id):
+
+    transaction_no = gen_transaction_id()
+    config.agent_data.transaction_no = transaction_no
+
     logging.debug("Issue credential to user")
     builder = build_cred(creddef_id)
-    builder.with_attribute({"transaction_no": "asdf1234"}) \
+    builder.with_attribute({"transaction_no": transaction_no}) \
         .with_attribute({"timestamp": str(int(time.time()))}) \
         .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
         .with_conn_id(conn_id)
@@ -189,11 +193,12 @@ def request_proof_of_dispatch(creddef_id = None, presex_id=None):
 ####END Stage 2
 ####START Stage 3: Package ownership
 
-#Shipper -> Vendor
+#Vendor -> user
 def send_package_cred_offer(conn_id, creddef_id):
     logging.debug("Issue credential to user")
 
     package_no = gen_package_no()
+    config.agent_data.update_package_no(package_no)
     builder = build_cred(creddef_id)
 
     builder.with_attribute({"package_no": package_no}) \
@@ -234,10 +239,10 @@ def request_proof_of_ownership(creddef_id):
 ####END Stage 3
 ####START Stage 4: receipt of package
 #Shipper -> Vendor
-def send_package_receipt_cred_offer(conn_id, creddef_id):
+def send_package_receipt_cred_offer(conn_id, creddef_id, package_no):
     logging.debug("Issue receipt credential to vendor")
     builder = build_cred(creddef_id)
-    builder.with_attribute({"package_no": "asdf1234"}) \
+    builder.with_attribute({"package_no": package_no}) \
         .with_attribute({"timestamp": str(int(time.time()))}) \
         .with_type("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview") \
         .with_conn_id(conn_id)
@@ -321,7 +326,6 @@ def get_package_creddefid():
     package_creds = [x for x in res if "package_cred" in x["schema_id"]]
     if package_creds:
         return package_creds[0]["cred_def_id"]
-
 
 def register_payment_agreement_schema(url):
     schema_name = "payment_agreement"
@@ -490,6 +494,15 @@ def gen_package_no(n=7):
     range_end = (10**n)-1
     return str(random.randint(range_start, range_end))
 
+def gen_product_id(n=4):
+    range_start = 10**(n-1)
+    range_end = (10**n)-1
+    return str(random.randint(range_start, range_end))
+
+def gen_transaction_id(n=5):
+    range_start = 10**(n-1)
+    range_end = (10**n)-1
+    return "t_id_" + str(random.randint(range_start, range_end))
 
 def parse_payment_endpoint(data):
     get_cred_attr_value("", data)
