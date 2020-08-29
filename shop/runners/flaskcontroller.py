@@ -26,6 +26,10 @@ app.register_blueprint(connections)
 app.register_blueprint(credentials)
 app.register_blueprint(shop)
 
+log = logging.getLogger('werkzeug')
+log.disabled = True
+app.logger.disabled = True
+
 
 #This file contains the routes for rendering html templates, and for initialising
 #  the flask application, and functions for interfacing with an Indy ledger
@@ -108,9 +112,6 @@ def test_search():
 
 
 def get_outstanding_events(role=None):
-    ##OK. VENDOR:
-    ## Payment proposals must be paired with issued credentials.
-    ## Verified payment proofs are then, internally, paired with a package numer
     events = []
     if role == "vendor":
         if trans.have_received_proof_proposal("payment_agreement"):

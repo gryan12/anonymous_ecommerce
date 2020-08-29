@@ -70,7 +70,8 @@ def issue_cred():
             }
             if amount:
                 config.agent_data.transaction_request["amount"] = amount
-            trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id)
+
+            trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id, endpoint=config.agent_data.get_endpoint())
             config.agent_data.incoming_transaction(product_id)
 
     elif state == "proposal_sent":
@@ -129,7 +130,7 @@ def issue_cred():
 
         elif config.role == "user":
             schema_name = trans.get_schema_name(data["credential_definition_id"])
-            print("-=======schema name: ", schema_name)
+            print("==schema name: ", schema_name)
 
             if schema_name == "payment_agreement":
                 #pretty_print_obj(data)
@@ -146,8 +147,6 @@ def issue_cred():
                 config.agent_data.payment_credential_received(transaction_id)
 
             elif schema_name == "package_cred":
-                #todo PARSE PACKAGE NUMBER
-
                 package_no = get_cred_proposal_value(data, "package_no")
                 logging.debug("Rceived receipt package credential containing package no: %s", package_no)
                 config.agent_data.package_credential_received(package_no)
@@ -168,10 +167,7 @@ def issue_cred():
                 config.agent_data.package_shipped()
             else:
                 config.agent_data.approved_transaction()
-
-
     return make_response(json.dumps({"code": "success"}), 200)
-
 
 ## todo: use the webhooks to keep track of current states of packages etc
 @webhooks.route("/webhooks/topic/present_proof/", methods=["POST"])

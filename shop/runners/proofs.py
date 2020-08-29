@@ -15,6 +15,7 @@ proofs = Blueprint('proofs', __name__)
 
 @proofs.route("/proofs/history", methods=["GET"])
 def get_proof_history():
+    pretty_print_obj(ob.get_pres_ex_records())
     return make_response(
         json.dumps(ob.get_pres_ex_records()),
         200
@@ -111,4 +112,7 @@ def prop_prove_ownership():
     trans.propose_proof_of_ownership(config.agent_data.current_connection, ownership_creddef)
     return make_response({"code": "received"})
 
-
+def pretty_print_obj(json_dict):
+    pretty = json.dumps(json_dict, indent=4)
+    print(pretty)
+    return pretty

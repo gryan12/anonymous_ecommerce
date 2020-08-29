@@ -5,9 +5,6 @@ import os
 import sys
 
 # blueprint for routes from the credentials page / related
-
-
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
 import runners.support.settings as config

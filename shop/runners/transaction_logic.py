@@ -55,10 +55,10 @@ def send_payment_agreement_proposal(product_id):
     resp = ob.send_cred_proposal(offer_json)
     return resp
 
-def send_payment_agreement_cred_offer(conn_id, creddef_id, product_id, value="50"):
+def send_payment_agreement_cred_offer(conn_id, creddef_id, product_id, value="50", endpoint="placeholder_endpoint"):
     logging.debug("Issue credential to user")
     builder = build_cred(creddef_id)
-    builder.with_attribute({"payment_endpoint": "placeholder_endpoint"}) \
+    builder.with_attribute({"payment_endpoint": endpoint}) \
         .with_attribute({"timestamp": str(int(time.time()))}) \
         .with_attribute({"amount": value}) \
         .with_attribute({"product_id": product_id}) \

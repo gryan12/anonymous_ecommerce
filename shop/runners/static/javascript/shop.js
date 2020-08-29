@@ -1,7 +1,4 @@
 function getUserActions(stage) {
-
-        details = getTransactionDetails()
-
         if (stage === "start") {
             $('#t_stage').append("Start: make purchase request")
             $('#actions').append('<button type="button" onclick = "requestPurchase()">Purchase Item</button>')
@@ -26,7 +23,7 @@ function getUserActions(stage) {
         }
 
         else if (stage === "payment_credential_proven") {
-            $('#t_stage').append('Received package number.<br>Awaiting proof of receipt')
+            $('#t_stage').append('Proven payment to vendor.<br>Awaiting package credential.')
         }
 
         else if (stage === "package_credential_received") {
@@ -85,7 +82,6 @@ function getBankActions(stage) {
         $('#t_stage').append('Role in transaction completed.<br> Successfully issued confirmation of payment to user.')
     }
 }
-
 
 function getShipperActions(stage) {
     if (stage === "start") {
@@ -187,24 +183,20 @@ function reload() {
     setTimeout(location.reload.bind(location), 60000);
 }
 
-function getTransactionDetails() {
-    console.log("transaction req")
-    $.ajax({ url: "/home/shop/transaction",
-        context: document.body,
-        dataType:'json',
-        success: function(response){
-           var results = response
-           console.log("in success")
-          // for (var i= 0; i < results.length; i++) {
-           //    console.log(results[i])
-           //}
-               for (var key in response) {
-                if (response.hasOwnProperty(key)) {
-                    console.log(key + " -> " + response[key]);
-                    if (key != 'result' && key != 'current_connection') {
-                        console.log("in key")
-                    }
-                }
-            }
-    }});
-}
+//function getTransactionDetails() {
+//    console.log("transaction req")
+//    $.ajax({ url: "/home/shop/transaction",
+//        context: document.body,
+//        dataType:'json',
+//        success: function(response){
+//           var results = response
+//               for (var key in response) {
+//                if (response.hasOwnProperty(key)) {
+//                    console.log(key + " -> " + response[key]);
+//                    if (key != 'result' && key != 'current_connection') {
+//                        console.log("in key")
+//                    }
+//                }
+//            }
+//    }});
+//}

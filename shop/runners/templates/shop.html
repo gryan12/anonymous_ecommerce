@@ -74,6 +74,8 @@
                 </div>
             </form>
             {% endif %}
+            {% if name == "User" %}
+            {% endif %}
         </div>
         <div id = "inputstuff">
             <h3>
@@ -113,6 +115,7 @@ $(document).ready(function() {
     }
 })
 </script>
+
 <script>
     $("#pack_form").submit(function(e) {
     console.log("Testing_one")

@@ -16,17 +16,23 @@ shop = Blueprint('shop', __name__)
 @shop.route("/home/shop", methods=["GET"])
 def render_shop_actions():
     stage = config.agent_data.get_stage()
+
+    if config.role == "user":
+        details = config.agent_data.get_transaction_values()
+    else:
+        details = {"none": "none"}
+
     if config.agent_data.has_public:
         did = get_public_did()
-        return render_template('shop.html', name=config.role.capitalize(), stage=stage, did=did)
+        return render_template('shop.html', name=config.role.capitalize(), stage=stage, did=did, **details)
     else:
-        return render_template('shop.html', name=config.role.capitalize(), stage=stage)
+        return render_template('shop.html', name=config.role.capitalize(), stage=stage, **details)
 
 # for when the shipping service received a package
 @shop.route("/home/shop/package/input", methods=["POST"])
 def input_package_no():
     if config.role != "shipper":
-        return make_response({"code":"not allowed for this agent"}, 404)
+        return make_response({"code": "not allowed for this agent"}, 404)
 
     package_data = request.data.decode("utf-8")
 
@@ -39,7 +45,6 @@ def input_package_no():
 
 @shop.route("/home/shop/transaction", methods=["GET"])
 def get_state():
-
     if config.role == "user":
         vals = config.agent_data.get_transaction_values()
         print(vals)

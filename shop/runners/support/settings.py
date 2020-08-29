@@ -56,6 +56,11 @@ class VendorData:
     def get_stage(self):
         return self.stages[self.stage]
 
+    def get_endpoint(self):
+        if not self.payment_endpoint:
+            self.payment_endpoint = gen_endpoint_id()
+        return self.payment_endpoint
+
     def update_product_id(self, product_id):
         log.debug("New message pertaining product of id: %s", product_id)
         self.product_id = product_id
@@ -169,9 +174,9 @@ class UserData:
         log.debug("New message pertaining product of id: %s", product_id)
         self.product_id = product_id
 
-    def update_amount(self, product_id):
-        log.debug("New message pertaining product of id: %s", product_id)
-        self.product_id = product_id
+    def update_amount(self, amount):
+        log.debug("New message pertaining amount owed of: %s", amount)
+        self.amount = amount
 
     def update_package_no(self, package_no):
         log.debug("New message pertaining package of number: %s", package_no)
@@ -186,7 +191,7 @@ class UserData:
         self.payment_endpoint = endpoint
 
     def output_stage(self):
-        log.debug("Vendor at stage: %s", self.get_stage())
+        log.debug("User at stage: %s", self.get_stage())
 
     def requested_payment_agreement(self):
         log.debug("0 called, with stage value: %s and get val: %s", self.stage, self.get_stage())
@@ -353,19 +358,6 @@ def get_transaction_values():
             resp[value] = val
     return resp
 
-
-def validate(data,
-             product_id=None,
-             amount=None,
-             transaction_id=None,
-             payment_endpoint=None,
-             package_no=None,
-             ):
-    return True
-
-
-
-
 # init data
 def setup():
     global agent_data
@@ -385,6 +377,10 @@ def setup():
         agent_data = BankData()
 
 
+def gen_endpoint_id(n=4):
+    range_start = 10**(n-1)
+    range_end = (10**n)-1
+    return "z_" + str(random.randint(range_start, range_end))
 
 
 
