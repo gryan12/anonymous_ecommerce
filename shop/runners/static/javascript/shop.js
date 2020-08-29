@@ -194,8 +194,17 @@ function getTransactionDetails() {
         dataType:'json',
         success: function(response){
            var results = response
-           for (var i= 0; i < results.length; i++) {
-               console.log(results[i])
-           }
+           console.log("in success")
+          // for (var i= 0; i < results.length; i++) {
+           //    console.log(results[i])
+           //}
+               for (var key in response) {
+                if (response.hasOwnProperty(key)) {
+                    console.log(key + " -> " + response[key]);
+                    if (key != 'result' && key != 'current_connection') {
+                        console.log("in key")
+                    }
+                }
+            }
     }});
 }

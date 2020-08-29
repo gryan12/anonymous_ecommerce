@@ -30,7 +30,12 @@ CRED_NAMES = [
 
 ##User
 #User -> Vendor
-def send_payment_agreement_proposal(product_id=config.DEMO_PRODUCT_ID):
+
+#todo amount
+def send_payment_agreement_proposal(product_id):
+
+    config.agent_data.update_product_id(product_id)
+
     proposal = {
        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
        "attributes": [

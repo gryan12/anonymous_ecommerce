@@ -91,7 +91,6 @@ def req_purchase():
 
     ##todo implement input through web
     product_id = trans.gen_product_id()
-
     trans.send_payment_agreement_proposal(product_id)
     return make_response({"code": "received"})
 

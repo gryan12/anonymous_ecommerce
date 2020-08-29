@@ -39,12 +39,18 @@ def input_package_no():
 
 @shop.route("/home/shop/transaction", methods=["GET"])
 def get_state():
+
+    if config.role == "user":
+        vals = config.agent_data.get_transaction_values()
+        print(vals)
+        return make_response(json.dumps(vals), 200)
+
     value_dict = config.get_transaction_values()
-    print(value_dict)
+    print("value dict: ", value_dict)
     if not value_dict:
         return make_response({"code": "starting state"})
     else:
-        make_response(json.loads(value_dict), 200)
+        return make_response(json.dumps(value_dict), 200)
 
 def get_public_did():
     resp = ob.get_public_did()

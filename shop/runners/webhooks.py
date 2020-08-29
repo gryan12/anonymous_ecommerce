@@ -123,7 +123,6 @@ def issue_cred():
         log.debug("Stored credential of id: %s", data["credential_definition_id"])
 
         if config.role == "vendor":
-            #todo PARSE PACKAGE NUMBER
             package_no = trans.get_cred_attr_value("package_no", data)
             log.debug("receipt confirmed for package: %s", package_no)
             config.agent_data.receipt_confirmed(package_no)
@@ -142,15 +141,12 @@ def issue_cred():
                 config.agent_data.received_agreement_cred(amount, endpoint)
 
             elif schema_name == "payment_credential":
-                #pretty_print_obj(data)
-                #todo PARSE TRANSACTION_ID
                 transaction_id = get_cred_proposal_value(data, "transaction_no")
                 logging.debug("Recevied payment t_id: %s", transaction_id)
                 config.agent_data.payment_credential_received(transaction_id)
 
             elif schema_name == "package_cred":
                 #todo PARSE PACKAGE NUMBER
-                #pretty_print_obj(data)
 
                 package_no = get_cred_proposal_value(data, "package_no")
                 logging.debug("Rceived receipt package credential containing package no: %s", package_no)
@@ -169,7 +165,6 @@ def issue_cred():
 
         if config.role == "vendor":
             if schema_name == "package_cred":
-                pretty_print_obj(data)
                 config.agent_data.package_shipped()
             else:
                 config.agent_data.approved_transaction()
@@ -185,12 +180,10 @@ def present_proof():
     presex_id = data["presentation_exchange_id"]
     state = data["state"]
     log.debug(f"message recieved thoruhg prsent proof, with creedx_id: {presex_id} and state: {state}")
-    #pretty_print_obj(data)
 
     if state == "proposal_received":
 
         proposal = data["presentation_proposal_dict"]["presentation_proposal"]
-        pretty_print_obj(data)
         try:
             creddef_id = proposal["attributes"][0]["cred_def_id"]
             log.debug("received proposal for proof presentation: with id: %s", creddef_id)
@@ -233,7 +226,6 @@ def present_proof():
         print("identifiers: ", data["presentation"]["identifiers"])
         identifiers = data["presentation"]["identifiers"][0]
         log.debug("==presentation sent")
-        pretty_print_obj(data)
 
         if config.role == "vendor":
             config.agent_data.receipt_proven()

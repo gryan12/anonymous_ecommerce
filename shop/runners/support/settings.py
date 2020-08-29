@@ -155,7 +155,21 @@ class UserData:
     def get_stage(self):
         return self.stages[self.stage]
 
+    def get_transaction_values(self):
+        ansdict = {
+            "product_id": self.product_id or "none",
+            "amount": self.amount or "none",
+            "transaction_id": self.amount or "none",
+            "payment_endpoint": self.payment_endpoint or "none",
+            "package_no": self.package_no or "none"
+        }
+        return ansdict
+
     def update_product_id(self, product_id):
+        log.debug("New message pertaining product of id: %s", product_id)
+        self.product_id = product_id
+
+    def update_amount(self, product_id):
         log.debug("New message pertaining product of id: %s", product_id)
         self.product_id = product_id
 
@@ -183,6 +197,8 @@ class UserData:
     def received_agreement_cred(self, amount, endpoint):
         if self.stage == 1:
             self.stage += 1
+            self.update_payment_endpoint(endpoint)
+            self.update_amount(amount)
             self.output_stage()
 
     def payment_agreement_proven(self):
@@ -299,7 +315,6 @@ class ShipperData:
 
     def output_stage(self):
         log.debug("Shipper stage: %s", self.get_stage())
-
 
     def get_stage(self):
         return self.stages[self.stage]

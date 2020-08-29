@@ -107,7 +107,6 @@ def test_search():
     return make_response({"code": ans})
 
 
-
 def get_outstanding_events(role=None):
     ##OK. VENDOR:
     ## Payment proposals must be paired with issued credentials.
