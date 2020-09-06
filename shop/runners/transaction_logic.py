@@ -229,6 +229,8 @@ def propose_proof_of_ownership(conn_id, creddef_id):
     ).withAttribute(
         "timestamp",
         cred_def_id=creddef_id
+    ).withAttribute(
+        "shipping_address",
     ).build(conn_id, comment="proof of package ownership")
     return ob.send_proof_proposal(req)
 
@@ -242,6 +244,8 @@ def request_proof_of_ownership(creddef_id):
     ).withAttribute(
         "timestamp",
         restrictions=[{"cred_def_id": creddef_id}]
+    ).withAttribute(
+        "shipping_address",
     ).with_conn_id(config.agent_data.current_connection).build()
     return ob.send_proof_request(req)
 

@@ -246,6 +246,7 @@ def present_proof():
         # START citation this section of the credential proof sorting creation algorithm
         # based on code found at
         # https://github.com/hyperledger/aries-cloudagent-python/blob/master/demo/runners/alice.py
+        # accessed 06/2020
         # authored by the maintainers of the Aries Cloudagent Python repository
         if req_creds:
             for row in sorted(

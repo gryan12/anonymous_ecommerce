@@ -138,7 +138,7 @@ class UserData:
         self.creddefs = {}
         self.transactions = []
         self.stage = 0
-        self.FICTIONAL_ADDRESS = "11, My Fictional Street, QWERTY"
+        self.FICTIONAL_ADDRESS = "11, My Fictional Street, QWE RTY"
 
         self.stages = [
             "start",
