@@ -157,6 +157,27 @@ $(document).ready(function() {
    xhttp.send();
 }
 
+
+function sendShipping(e) {
+    console.log("Testing_two")
+        e.preventDefault();
+        var package = document.getElementById('pack_no').value
+        var package_data = {"package_no": package}
+        var url = "/home/shop/package/input"
+        $.ajax({
+               type: "POST",
+               url: url,
+               dataType: 'json',
+               contentType: 'application/json',
+               data: package_data,
+               success: function(data)
+               {
+                    console.log("success")
+                    //location.reload(true)
+               }
+             });
+}
+
 $(document).ready(function(){
     $.ajax({ url: "/connections/get_active_connections",
         context: document.body,

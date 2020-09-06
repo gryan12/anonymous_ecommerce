@@ -32,6 +32,7 @@ def render_shop_actions():
 @shop.route("/home/shop/package/input", methods=["POST"])
 def input_package_no():
     logging.debug("input detected")
+
     if config.role != "shipper":
         return make_response({"code": "not allowed for this agent"}, 404)
 
