@@ -45,12 +45,13 @@ def get_detailed_proof_history():
             print("verified")
             if result["verified"] == "true":
                 resp["verified"] = "true"
-                if "requested_proof" in result:
-                    revealed_attrs = result["requested_proof"]["revealed_attrs"]
+                if "presentation" in result:
+                    revealed_attrs = result["presentation"]["requested_proof"]["revealed_attrs"]
                     for attribute in revealed_attrs:
                         attr = format_proof_string(attribute)
                         value = revealed_attrs[attribute]["raw"]
                         print("attribute: ", attr, " value: ", value)
+                        resp[attr] = value
 
     return make_response(
         json.dumps(resp), 200

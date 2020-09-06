@@ -220,6 +220,7 @@ def send_package_cred_offer(conn_id, creddef_id):
     return ob.send_cred_offer(offer_req)
 
 #User -> Shipper
+# todo self attest address
 def propose_proof_of_ownership(conn_id, creddef_id):
     builder = build_proof_proposal("proof of package ownership")
     req = builder.withAttribute(
@@ -467,6 +468,8 @@ def get_proof_validated(schema_name, proof_name=None, ex_id=None):
                                             return True
     return False
 
+# Helper function
+# returns True if a schema of @schema_name is stored
 def have_receieved_proof_proposal(schema_name=None):
     proof_records = ob.get_pres_ex_records()
     results = proof_records["results"]
@@ -483,7 +486,9 @@ def have_receieved_proof_proposal(schema_name=None):
     return False
 
 
-#extract value from credential
+# Helper funciton.
+# Returns value string if a credential attribute of name = @name
+# is present in the given aries issue-credential message
 def get_cred_attr_value(name, offer):
     attributes = offer["credential_proposal_dict"]["credential_proposal"]["attributes"]
     for attr in attributes:

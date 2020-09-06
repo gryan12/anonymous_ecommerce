@@ -119,7 +119,7 @@ $(document).ready(function() {
 <script>
     $("#pack_form").submit(function(e) {
     console.log("Testing_one")
-    e.preventDefault(); // avoid to execute the actual submit of the form.
+    e.preventDefault();
     var form = $(this);
     var package = document.getElementById('pack_no').value
     var package_data = {"package_no": package}
@@ -132,8 +132,8 @@ $(document).ready(function() {
            data: package_data,
            success: function(data)
            {
-                location.reload(true)
                 console.log("success")
+                location.reload(true)
            }
          });
 })

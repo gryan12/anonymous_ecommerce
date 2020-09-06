@@ -378,6 +378,9 @@ def setup():
         agent_data = BankData()
 
 
+def reset():
+    agent_data.stage = 0
+
 def gen_endpoint_id(n=4):
     range_start = 10**(n-1)
     range_end = (10**n)-1

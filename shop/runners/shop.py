@@ -31,6 +31,7 @@ def render_shop_actions():
 # for when the shipping service received a package
 @shop.route("/home/shop/package/input", methods=["POST"])
 def input_package_no():
+    logging.debug("input detected")
     if config.role != "shipper":
         return make_response({"code": "not allowed for this agent"}, 404)
 
@@ -56,6 +57,11 @@ def get_state():
         return make_response({"code": "starting state"})
     else:
         return make_response(json.dumps(value_dict), 200)
+
+@shop.route("/home/shop/transaction", methods=["GET"])
+def reset():
+    config.reset()
+    return make_response({"code": "success"}, 200)
 
 def get_public_did():
     resp = ob.get_public_did()

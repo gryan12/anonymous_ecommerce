@@ -33,8 +33,9 @@
     {% endif %}
   </div>
   <div class="container">
-      <div class="col-sm-4">
+      <div class="col-md-6">
           <h3><u>Actions</u></h3>
+          <div class="btn-group-vertical">
           {% if name == "Vendor" %}
           <button class="btn btn-primary" id="propose_dispatch" onclick="proposeProofOfDispatch()">Propose Proof of Dispatch </button>
           {% endif %}
@@ -57,8 +58,9 @@
               {% endif %}
           </button>
           {% endif %}
+          </div>
       </div>
-      <div class="col-sm-4">
+      <div class="col-md-6">
         <h3><u>Proof Exchange History</u></h3>
         <p id ="proof_ex_hist"></p>
       </div>
@@ -75,14 +77,19 @@
            console.log("object :%0", response["results"])
            var results = response["results"]
            for (var i= 0; i < results.length; i++) {
-               if (results[i].hasOwnProperty("verified")) {
-                   $('#proof_ex_hist').append("<u>Verification Result:</u> " + results[i].verified + "<br>");
-               }
-               $('#proof_ex_hist').append("Updated at: " + results[i].updated_at + "<br>");
-               $('#proof_ex_hist').append("Role: " + results[i].role + "<br>");
                $('#proof_ex_hist').append("State: " + results[i].state + "<br>");
-               if (results[i].hasOwnProperty("presentation_proposal_dict")) {
-                    console.log("yes")
+               $('#proof_ex_hist').append("Role: " + results[i].role + "<br>");
+               $('#proof_ex_hist').append("Updated at: " + results[i].updated_at + "<br>");
+               if (results[i].state === "verified") {
+                    console.log("verified!")
+                   $('#proof_ex_hist').append("<u>Verification Result:</u> " + results[i].verified + "<br>");
+                   var revealed = results[i].presentation.requested_proof.revealed_attrs
+                   for (var key in revealed) {
+                           $('#proof_ex_hist').append("Attribute name:" + key.substring(2, key.length-5) + ", value: " + revealed[key]['raw'] + "<br>");
+                   }
+
+               }
+               else if (results[i].hasOwnProperty("presentation_proposal_dict")) {
                     attributes = results[i].presentation_proposal_dict.presentation_proposal.attributes
                     $('#proof_ex_hist').append("Attributes: <br>");
                     for (var i = 0; i < attributes.length; i++) {
