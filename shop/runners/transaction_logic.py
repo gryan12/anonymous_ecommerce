@@ -114,6 +114,9 @@ def request_proof_of_payment_agreement(creddef_id = None):
     ).withAttribute(
         "timestamp",
         restrictions=[{"cred_def_id": creddef_id}]
+    ).withAttribute(
+        "amount",
+        restrictions=[{"cred_def_id": creddef_id}]
     ).with_conn_id(config.agent_data.current_connection).build()
     return ob.send_proof_request(req)
 
@@ -416,7 +419,6 @@ def get_schema_name(creddef):
     if not resp:
         return False
     return resp["schema"]["name"]
-
 
 #####VALIDATORS#####
 def is_credential_stored(name):

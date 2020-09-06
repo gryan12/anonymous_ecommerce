@@ -1,9 +1,0 @@
-############
-############
-
-
-
-### Add manual input for package number for shipper. this approximates what it would be like anyway.
-### Add support for the current values to the interface. E.g. show current product id, package id, etc.
-
-this can jsut be in the single updat epage so as to not make the single-thread nautre of it not too jarring

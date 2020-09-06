@@ -81,6 +81,14 @@
                $('#proof_ex_hist').append("Updated at: " + results[i].updated_at + "<br>");
                $('#proof_ex_hist').append("Role: " + results[i].role + "<br>");
                $('#proof_ex_hist').append("State: " + results[i].state + "<br>");
+               if (results[i].hasOwnProperty("presentation_proposal_dict")) {
+                    console.log("yes")
+                    attributes = results[i].presentation_proposal_dict.presentation_proposal.attributes
+                    $('#proof_ex_hist').append("Attributes: <br>");
+                    for (var i = 0; i < attributes.length; i++) {
+                           $('#proof_ex_hist').append("Attribute name:" + attributes[i].name + "<br>");
+                    }
+               }
                $('#proof_ex_hist').append("<br>");
            }
         }});

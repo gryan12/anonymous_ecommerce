@@ -2,6 +2,10 @@ import requests
 import logging
 import json
 
+
+# this file contains all HTTP request functions that are
+# sent to the instance of aca-py.
+
 ###credentials
 AGENT_URL = ""
 
@@ -9,6 +13,8 @@ def set_agent_url(url):
     global AGENT_URL
     AGENT_URL = url
 
+# data: a json formatted string, or a dict.
+# returns a dictionary (json) on successful request, or None
 def post(url, data=None):
     if data:
         response = requests.post(url, json=data)
@@ -21,12 +27,12 @@ def post(url, data=None):
         except json.JSONDecodeError as e:
             print(e)
             raise
-    elif response.status_code == 422:
-        print(response.json())
     else:
         logging.debug(str(response.status_code) + response.reason)
         return None
 
+# http get request to url.
+# returns response dict or None
 def get(url):
     response = requests.get(url)
     if response.status_code == 200:
@@ -39,7 +45,7 @@ def get(url):
         logging.debug(str(response.status_code) + response.reason)
         return None
 
-##credentials
+##outbound credentials
 def send_cred_offer(offer_request):
     req_url = AGENT_URL + "/issue-credential/send-offer"
     return post(req_url, data=offer_request)
@@ -159,11 +165,7 @@ def get_creddef(creddef):
     req_url = AGENT_URL + f"/credential-definitions/{creddef}"
     return get(req_url)
 
-
-
-
 ##misc
-
 def get_status():
     req_url = AGENT_URL + "/status"
     return get(req_url)

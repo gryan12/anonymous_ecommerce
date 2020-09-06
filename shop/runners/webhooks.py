@@ -9,14 +9,10 @@ import runners.support.outbound_routing as ob
 import runners.support.settings as config
 import runners.transaction_logic as trans
 
-
-# code to handle all inbound notifactions from the aca-py instance.
-
-
-
 webhooks = Blueprint('webhooks', __name__)
 
 log = logging.getLogger(__name__)
+# code to handle all inbound notifactions from the aca-py instance.
 
 @webhooks.route("/webhooks/topic/connections/", methods=["POST"])
 def connections():
@@ -52,11 +48,14 @@ def messages():
     log.debug("received message : %s", data["content"])
     return make_response(json.dumps({"code":"success"}), 200)
 
+# separaate requests by their json 'request' field,
+# then perform appropriate transaction behaviour
 @webhooks.route("/webhooks/topic/issue_credential/", methods=["POST"])
 def issue_cred():
     data = json.loads(request.data)
     state = data["state"]
     log.debug("issue cred with state: %s", state)
+
     # ISSUER state
     if state == "proposal_received":
         if config.role == "vendor":
@@ -130,13 +129,11 @@ def issue_cred():
 
         elif config.role == "user":
             schema_name = trans.get_schema_name(data["credential_definition_id"])
-            print("==schema name: ", schema_name)
+            #print("==schema name: ", schema_name)
 
             if schema_name == "payment_agreement":
-                #pretty_print_obj(data)
                 amount = get_cred_proposal_value(data, "amount")
                 endpoint = get_cred_proposal_value(data, "payment_endpoint")
-                ##endparse
 
                 logging.debug("Recevied payment credential for endpoint: %s, and amount: %s", endpoint, amount)
                 config.agent_data.received_agreement_cred(amount, endpoint)
@@ -151,8 +148,8 @@ def issue_cred():
                 logging.debug("Rceived receipt package credential containing package no: %s", package_no)
                 config.agent_data.package_credential_received(package_no)
 
-    elif state == "credential_issued":
 
+    elif state == "credential_issued":
         schema_name = trans.get_schema_name(data["credential_definition_id"])
         log.debug("Issued credential, of schema name : %s", schema_name)
 
@@ -214,8 +211,6 @@ def present_proof():
     elif state == "presentation_received":
         proof = ob.verify_presentation(presex_id)
         log.debug("Verification result is: %s", proof["verified"])
-       # endpoint = get_received_presentation_values(data, "payment_endpoint")
-       # print("===========endpoint: ", endpoint)
 
     elif state == "presentation_sent":
         name = data["presentation_request"]["name"]
@@ -248,6 +243,10 @@ def present_proof():
         # fetch credentials that match from wallet
         req_creds = ob.get_req_creds(presex_id)
 
+        # START citation this section of the credential proof sorting creation algorithm
+        # based on code found at
+        # https://github.com/hyperledger/aries-cloudagent-python/blob/master/demo/runners/alice.py
+        # authored by the maintainers of the Aries Cloudagent Python repository
         if req_creds:
             for row in sorted(
                     req_creds,
@@ -259,6 +258,7 @@ def present_proof():
                         ref_creds[ref] = row
 
             revealed = {}
+            not_creds = {}
             for req_attr in pres_req["requested_attributes"]:
                 if req_attr in ref_creds:
                     revealed[req_attr] = {
@@ -266,18 +266,16 @@ def present_proof():
                     }
                 else:
                     log.debug("No credential found in wallet for requested attribute")
+        # END citation
+                    if config.role == "user":
+                        not_creds[req_attr] = config.agent_data.FICTIONAL_ADDRESS
 
             preds = {}
-           # for req_pred in pres_req["requested_predicates"]:
-           #     if req_pred in ref_creds:
-           #         preds[req_pred] = {
-           #             "cred_id": ref_creds[req_pred]["cred_info"]["referent"]
-           #         }
 
             proof_pres = {
                 "requested_predicates": preds,
                 "requested_attributes": revealed,
-                "self_attested_attributes": {},
+                "self_attested_attributes": not_creds,
             }
 
             ob.send_presentation(proof_pres, presex_id)

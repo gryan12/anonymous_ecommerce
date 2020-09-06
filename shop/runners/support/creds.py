@@ -3,12 +3,6 @@ import json
 # Code for the creation of aries JSON objects
 # needed for aries protocols
 
-#TYPES = {
-#    "propose_presentation": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation",
-#    "presentation_preview":
-#}
-
-
 def build_schema(name, version, attributes):
     schema = {
         "schema_name": name,
@@ -27,6 +21,8 @@ def build_cred_definition(schema_id, revocation=False):
 def build_cred(creddef_id):
     return CredBuilder(creddef_id)
 
+
+# an object for dynamically building credential objects.
 class CredBuilder:
     def __init__(self, creddef_id=None):
         self.attributes = {}
@@ -99,7 +95,6 @@ class CredBuilder:
            "trace": False
         }
         return req
-
 
 def build_credential_proposal(
                    connection_id,

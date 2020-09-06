@@ -21,6 +21,41 @@ def get_proof_history():
         200
     )
 
+
+def format_proof_string(proof_str):
+    if not proof_str:
+        return ""
+
+    proof_str = proof_str[2:]
+    return proof_str[:-5]
+
+
+
+
+@proofs.route("/proofs/detailed/history", methods=["GET"])
+def get_detailed_proof_history():
+    history = ob.get_pres_ex_records()
+    resp = {}
+
+    if "results" not in history:
+        return make_response("not ok", 400)
+
+    for result in history["results"]:
+        if "verified" in result:
+            print("verified")
+            if result["verified"] == "true":
+                resp["verified"] = "true"
+                if "requested_proof" in result:
+                    revealed_attrs = result["requested_proof"]["revealed_attrs"]
+                    for attribute in revealed_attrs:
+                        attr = format_proof_string(attribute)
+                        value = revealed_attrs[attribute]["raw"]
+                        print("attribute: ", attr, " value: ", value)
+
+    return make_response(
+        json.dumps(resp), 200
+    )
+
 @proofs.route("/proofs/request_proof/", methods=["GET"])
 def req_proof():
     if not ob.hasActiveConnection():

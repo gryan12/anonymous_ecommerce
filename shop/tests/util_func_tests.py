@@ -16,4 +16,3 @@ class TestCredMethods(unittest.TestCase):
         builder = build_proof_request("test", "2")
         proof_req = builder.build()
         self.assertTrue(isinstance(proof_req, dict))
-
