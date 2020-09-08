@@ -6,14 +6,8 @@ import src.support.outbound_routing as ob
 from src.support.creds import build_cred, build_proof_request, build_schema, build_credential_proposal, build_proof_proposal
 import src.support.settings as config
 
-
-#### Stage 1: purchase request
-##todo the idea here is that initiating purchase of a prpduct would intitiate
-## a credential proposal that incldues the value to be paid, the listing id,
-## and an endpoint. The vendor cna then refuse or accept a requet to purchase,
-## with the latter involving issueing a credential of the relevant amount.
-## any potential dispute could be accomplised over resending a credential offer.
-
+# This file containst the functions that perform transaction-specific
+# calls, building the needed requests and sending them to the aries agents
 
 CRED_NAMES = [
     "payment_agreement",
@@ -24,8 +18,6 @@ CRED_NAMES = [
 
 ##User
 #User -> Vendor
-
-#todo amount
 def send_payment_agreement_proposal(product_id):
 
     if not config.agent_data.product_id:

@@ -109,7 +109,6 @@ def register_did(ledger_url, seed=None, alias=None, role="TRUST_ANCHOR"):
     try:
         resp = json.loads(response.text)
     except json.JSONDecodeError as e:
-        print(response.headers)
         log.debug("ERROR REGISTERING DID WITH THE LEDGER")
         sys.exit(-1)
     return json.loads(response.text)

@@ -7,18 +7,9 @@ from ..src.support.outbound_routing import post, get, get_status, create_invite,
 
 
 #basic aries interaction tests
-class TestOutboundFunctions(unittest.TestCase):
+class testTransFunctions(unittest.TestCase):
 
-    def connected_to_aries(self):
-        self.assertTrue(get_status)
 
-    def get_returns_dict_on_success(self):
-        self.assertTrue(isinstance(get_status(), dict))
-
-    def post_returns_dict_on_success(self):
-        self.assertTrue(isinstance(create_invite(), dict))
-
-    def get_returns_none_on_failure(self):
-        self.assertFalse(get("false_url"))
+    def
 
 

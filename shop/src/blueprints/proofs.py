@@ -14,12 +14,10 @@ proofs = Blueprint('proofs', __name__)
 
 @proofs.route("/proofs/history", methods=["GET"])
 def get_proof_history():
-    pretty_print_obj(ob.get_pres_ex_records())
     return make_response(
         json.dumps(ob.get_pres_ex_records()),
         200
     )
-
 
 def format_proof_string(proof_str):
     if not proof_str:
@@ -27,8 +25,6 @@ def format_proof_string(proof_str):
 
     proof_str = proof_str[2:]
     return proof_str[:-5]
-
-
 
 
 @proofs.route("/proofs/detailed/history", methods=["GET"])

@@ -1,6 +1,7 @@
 import subprocess
 import os
 
+# Starts an instance of aca-py on a subprocess.
 def start_aries(start_port, seed, label, genesis_url=None):
     ledger_url = os.getenv("LEDGER_URL")
 
@@ -32,9 +33,9 @@ def start_aries(start_port, seed, label, genesis_url=None):
         "--auto-accept-requests",
         "--auto-accept-invites",
         "--auto-store-credential",
-        "--debug-connections",
-        "--debug-credentials",
-        "--debug-presentations",
+       # "--debug-connections",
+       # "--debug-credentials",
+       # "--debug-presentations",
         "--genesis-url", genesis_url,
         "--seed", seed,
         "--preserve-exchange-records",
