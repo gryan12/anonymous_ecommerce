@@ -38,7 +38,6 @@ class VendorData:
         self.transaction_id = None
         self.payment_endpoint = None
 
-
         # transactions tages
         self.stages = [
             "start",
@@ -49,6 +48,11 @@ class VendorData:
             "receipt_confirmed",
             "completed"
         ]
+        self.products = {
+            "4545": "44",
+            "1738": "50",
+            "5611": "12"
+        }
         self.stage = 0
 
 
@@ -63,6 +67,7 @@ class VendorData:
 
     def update_product_id(self, product_id):
         log.debug("New message pertaining product of id: %s", product_id)
+        log.debug("...which has a cost of: %s", self.get_cost())
         self.product_id = product_id
 
     def update_package_no(self, package_no):
@@ -72,6 +77,9 @@ class VendorData:
     def update_transaction_id(self, t_id):
         log.debug("New message pertaining transaction_id of id: %s", t_id)
         self.transaction_id = t_id
+
+    def get_cost(self):
+        return self.products[self.product_id]
 
     def output_stage(self):
         log.debug("Vendor at stage: %s", self.get_stage())

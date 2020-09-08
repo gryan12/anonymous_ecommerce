@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import csv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runners.support.outbound_routing as ob
@@ -13,6 +14,23 @@ webhooks = Blueprint('webhooks', __name__)
 
 log = logging.getLogger(__name__)
 # code to handle all inbound notifactions from the aca-py instance.
+
+# if type == start
+
+proofcounts = {
+    "agreement": 0,
+    "payment": 0,
+    "receipt": 0,
+    "ownership": 0
+}
+
+def log_performance(name, value, type):
+    file = name + ".csv"
+    proofcounts[name] += 1
+    with open(file, 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=' ',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            spamwriter.writerow([str(proofcounts[name]), type, value])
 
 @webhooks.route("/webhooks/topic/connections/", methods=["POST"])
 def connections():
@@ -61,17 +79,17 @@ def issue_cred():
         if config.role == "vendor":
             log.debug("proposal received as vendor")
             product_id = get_cred_proposal_value(data, "product_id")
-            #amount = get_cred_proposal_value(data, "amount")
+            amount = get_cred_proposal_value(data, "amount")
             log.debug("Proposal received for payment, for product with ID: %s", product_id)
 
             config.agent_data.transaction_request = {
                 "product": product_id,
             }
-            #if amount:
-                #config.agent_data.transaction_request["amount"] = amount
+            if amount:
+                config.agent_data.transaction_request["amount"] = amount
 
-            config.agent_data.incoming_transaction(product_id)
             trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id, endpoint=config.agent_data.get_endpoint())
+            config.agent_data.incoming_transaction(product_id)
 
     elif state == "proposal_sent":
         if config.role == "user":
@@ -173,9 +191,7 @@ def present_proof():
     presex_id = data["presentation_exchange_id"]
     state = data["state"]
     log.debug(f"message recieved thoruhg prsent proof, with creedx_id: {presex_id} and state: {state}")
-
     if state == "proposal_received":
-
         proposal = data["presentation_proposal_dict"]["presentation_proposal"]
         try:
             creddef_id = proposal["attributes"][0]["cred_def_id"]

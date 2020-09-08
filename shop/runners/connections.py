@@ -1,6 +1,8 @@
 from flask import Flask, Blueprint, render_template, make_response, redirect, request
 import json
 import logging
+import urllib
+import base64
 import os
 import sys
 # blueprint for handling requests from the connections tab / related
@@ -35,6 +37,14 @@ def set_current_conn():
 def rec_inv():
     invdict = request.form.to_dict()
     invite = invdict['invite']
+
+    if invite.startswith("http"):
+        parsed_url = urllib.parse.urlparse(invite)
+        query_string = parsed_url.query
+        query_string = query_string[4:]
+        invite = base64.b64decode(query_string)
+        invite = invite.decode("utf-8")
+
     ob.receive_invite(invite)
     return redirect(request.referrer)
 

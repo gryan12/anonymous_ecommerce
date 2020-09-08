@@ -57,7 +57,12 @@ def prop_cred():
     if config.role == "user":
         logging.debug("proposing payment agreement credential")
         ##todo implement input through web
-        product_id = trans.gen_product_id()
+
+        if not config.agent_data.product_id:
+            product_id = trans.gen_product_id()
+        else:
+            product_id = config.agent_data.product_id
+
         trans.send_payment_agreement_proposal(product_id)
 
         return make_response({"code": "received"})

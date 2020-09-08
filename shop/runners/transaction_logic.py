@@ -34,7 +34,8 @@ CRED_NAMES = [
 #todo amount
 def send_payment_agreement_proposal(product_id):
 
-    config.agent_data.update_product_id(product_id)
+    if not config.agent_data.product_id:
+        config.agent_data.update_product_id(product_id)
 
     proposal = {
        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
@@ -55,8 +56,12 @@ def send_payment_agreement_proposal(product_id):
     resp = ob.send_cred_proposal(offer_json)
     return resp
 
-def send_payment_agreement_cred_offer(conn_id, creddef_id, product_id, value="50", endpoint="placeholder_endpoint"):
+def send_payment_agreement_cred_offer(conn_id, creddef_id, product_id, value=None, endpoint="placeholder_endpoint"):
     logging.debug("Issue credential to user")
+
+    if not value:
+        value = config.agent_data.get_cost()
+
     builder = build_cred(creddef_id)
     builder.with_attribute({"payment_endpoint": endpoint}) \
         .with_attribute({"timestamp": str(int(time.time()))}) \

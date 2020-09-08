@@ -59,10 +59,31 @@ def get_state():
     else:
         return make_response(json.dumps(value_dict), 200)
 
-@shop.route("/home/shop/transaction", methods=["GET"])
+@shop.route("/home/shop/transaction/reset", methods=["GET"])
 def reset():
     config.reset()
     return make_response({"code": "success"}, 200)
+
+
+@shop.route("/home/shop/request/item", methods=["POST"])
+def request_item():
+
+    if not ob.hasActiveConnection():
+        return make_response({"code": "failure", "reason": "agent has no active connections"})
+
+    data = request.data.decode("utf-8")
+    print(data)
+    print(type(data))
+
+    product = data.split("=")[1].strip()
+
+    if len(product) > 3:
+        print("Purchase request for product : ", product)
+        config.agent_data.update_product_id(product)
+        trans.send_payment_agreement_proposal(product)
+
+    return redirect(request.referrer)
+
 
 def get_public_did():
     resp = ob.get_public_did()

@@ -4,6 +4,9 @@ import random
 import os
 import sys
 import time
+import urllib
+import base64
+
 from flask import Flask, request, make_response, render_template, redirect, url_for
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -164,6 +167,8 @@ def await_agent(admin_url):
 def input_json_invite(input_json):
     resp = ob.receive_invite(invite_json=input_json)
     return resp
+
+
 
 def output_json_invite():
     resp = ob.create_invite()

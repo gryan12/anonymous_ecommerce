@@ -1,7 +1,12 @@
 function getUserActions(stage) {
         if (stage === "start") {
             $('#t_stage').append("Start: make purchase request")
-            $('#actions').append('<button type="button" onclick = "requestPurchase()">Purchase Item</button>')
+            $('#actions').append('<br><br>')
+            $('#actions').append('<label>Demonstration Listing #1: Product ID: 4545  Cost: £44 &nbsp </label><button type="button" id="1" onclick = "purchaseRequested(this.id)">Request Purchase</button><br>')
+            $('#actions').append('<br>')
+            $('#actions').append('<label>Demonstration Listing #2: Product ID: 1738  Cost: £50 &nbsp </label><button type="button" id ="2" onclick = "purchaseRequested(this.id)">Request Purchase</button><br>')
+            $('#actions').append('<br>')
+            $('#actions').append('<label>Demonstration Listing #3: Product ID: 5611  Cost: £12 &nbsp </label><button type="button" id="3" onclick = "purchaseRequested(this.id)">Request Purchase</button><br>')
         }
 
         else if (stage === "agreement_proposed") {
@@ -157,6 +162,47 @@ $(document).ready(function() {
    xhttp.send();
 }
 
+
+function purchaseRequested(id) {
+
+    console.log(id);
+
+    var product_id;
+    var cost;
+
+    if (id === "1") {
+        product_id = "4545";
+    }
+    else if (id === "2") {
+        product_id = "1738";
+    }
+    else if (id ==="3") {
+        product_id = "5611";
+    }
+
+    var json_item = {
+        "product_id": product_id,
+     };
+
+     buyItem(json_item);
+}
+
+function buyItem(item) {
+    console.log("Requesting purchase of item");
+    var url= "/home/shop/request/item";
+    $.ajax({
+           type: "POST",
+           url: url,
+           dataType: 'json',
+           contentType: 'application/json',
+           data: item,
+           success: function(data)
+           {
+                console.log("success")
+                location.reload(true)
+           }
+         });
+}
 
 function sendShipping(e) {
     console.log("Testing_two")
