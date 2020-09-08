@@ -70,8 +70,9 @@ def issue_cred():
             #if amount:
                 #config.agent_data.transaction_request["amount"] = amount
 
+            cost = config.agent_data.products[product_id]
             config.agent_data.incoming_transaction(product_id)
-            trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id, endpoint=config.agent_data.get_endpoint())
+            trans.send_payment_agreement_cred_offer(data["connection_id"], config.agent_data.creddefs["payment_agreement"], product_id, value=cost, endpoint=config.agent_data.get_endpoint())
 
     elif state == "proposal_sent":
         if config.role == "user":

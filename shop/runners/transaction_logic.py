@@ -58,9 +58,7 @@ def send_payment_agreement_proposal(product_id):
 
 def send_payment_agreement_cred_offer(conn_id, creddef_id, product_id, value=None, endpoint="placeholder_endpoint"):
     logging.debug("Issue credential to user")
-
-    if not value:
-        value = config.agent_data.get_cost()
+    print("value is : ", value, " product_id is: ", product_id)
 
     builder = build_cred(creddef_id)
     builder.with_attribute({"payment_endpoint": endpoint}) \

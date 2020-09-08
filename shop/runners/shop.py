@@ -82,7 +82,7 @@ def request_item():
         config.agent_data.update_product_id(product)
         trans.send_payment_agreement_proposal(product)
 
-    return redirect(request.referrer)
+    return make_response({"code": "success"})
 
 
 def get_public_did():

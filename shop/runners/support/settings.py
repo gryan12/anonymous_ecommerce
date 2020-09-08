@@ -67,8 +67,8 @@ class VendorData:
 
     def update_product_id(self, product_id):
         log.debug("New message pertaining product of id: %s", product_id)
-        log.debug("...which has a cost of: %s", self.get_cost())
         self.product_id = product_id
+        log.debug("...which has a cost of: %s", self.get_cost())
 
     def update_package_no(self, package_no):
         log.debug("New message pertaining package of numner: %s", package_no)
