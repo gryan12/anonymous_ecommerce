@@ -4,10 +4,9 @@ import logging
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import runners.support.outbound_routing as ob
-import runners.support.settings as config
-import runners.transaction_logic as trans
+import src.support.outbound_routing as ob
+import src.support.settings as config
+import src.transaction_logic as trans
 
 webhooks = Blueprint('webhooks', __name__)
 

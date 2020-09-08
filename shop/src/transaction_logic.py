@@ -8,9 +8,9 @@ import sys
 import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import runners.support.outbound_routing as ob
-from runners.support.creds import build_cred, build_proof_request, build_schema, build_credential_proposal, build_proof_proposal
-import runners.support.settings as config
+import src.support.outbound_routing as ob
+from src.support.creds import build_cred, build_proof_request, build_schema, build_credential_proposal, build_proof_proposal
+import src.support.settings as config
 
 
 #### Stage 1: purchase request

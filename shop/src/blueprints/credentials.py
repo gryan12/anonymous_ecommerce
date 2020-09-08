@@ -5,10 +5,9 @@ import os
 import sys
 
 # blueprint for routes from the credentials page / related
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import runners.support.outbound_routing as ob
-import runners.support.settings as config
-import runners.transaction_logic as trans
+import src.support.outbound_routing as ob
+import src.support.settings as config
+import src.transaction_logic as trans
 
 credentials = Blueprint('credentials', __name__)
 

@@ -2,13 +2,11 @@ import os
 import logging
 import random
 
-
 log = logging.getLogger(__name__)
 
 #globals
 agent_data = None
 role = None
-
 
 DEMO_PRODUCT_ID = "asd123f"
 DEMO_PACKAGE_NO = "123456"

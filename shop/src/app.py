@@ -10,18 +10,18 @@ import base64
 from flask import Flask, request, make_response, render_template, redirect, url_for
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import runners.support.outbound_routing as ob
-from runners.agent_proc import start_aries
-from runners.webhooks import webhooks
-from runners.proofs import proofs
-from runners.credentials import credentials
-from runners.connections import connections
-from runners.shop import shop
-import runners.support.settings as config
-import runners.transaction_logic as trans
+import src.support.outbound_routing as ob
+from src.agent_proc import start_aries
+from src.blueprints.webhooks import webhooks
+from src.blueprints.proofs import proofs
+from src.blueprints.credentials import credentials
+from src.blueprints.connections import connections
+from src.blueprints.shop import shop
+import src.support.settings as config
+import src.transaction_logic as trans
 import logging
 
-path = os.path.join(os.getcwd(), "shop/runners/static")
+path = os.path.join(os.getcwd(), "shop/src/static")
 app = Flask(__name__, static_folder=path)
 app.register_blueprint(webhooks)
 app.register_blueprint(proofs)

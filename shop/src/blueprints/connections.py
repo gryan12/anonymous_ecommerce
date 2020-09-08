@@ -7,9 +7,8 @@ import os
 import sys
 # blueprint for handling requests from the connections tab / related
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import runners.support.outbound_routing as ob
-import runners.support.settings as config
-import runners.transaction_logic as trans
+import src.support.outbound_routing as ob
+import src.support.settings as config
 
 connections = Blueprint('connections', __name__)
 
@@ -26,13 +25,7 @@ def set_current_conn():
             config.agent_data.current_connection = data["selected_connection"]
     return redirect(request.referrer)
 
-#@connections.route("/connections/current/", methods=["GET"])
-#def get_current_conn():
-#    if not ob.hasActiveConnection():
-#        resp = {"connection": "none"}
-#    else
-#        resp = {""}
-#
+
 @connections.route("/connections/receive_invite/", methods=["POST"])
 def rec_inv():
     invdict = request.form.to_dict()
