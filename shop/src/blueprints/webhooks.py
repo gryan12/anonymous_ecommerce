@@ -60,14 +60,11 @@ def issue_cred():
         if config.role == "vendor":
             log.debug("proposal received as vendor")
             product_id = get_cred_proposal_value(data, "product_id")
-            #amount = get_cred_proposal_value(data, "amount")
             log.debug("Proposal received for payment, for product with ID: %s", product_id)
 
             config.agent_data.transaction_request = {
                 "product": product_id,
             }
-            #if amount:
-                #config.agent_data.transaction_request["amount"] = amount
 
             cost = config.agent_data.products[product_id]
             config.agent_data.incoming_transaction(product_id)
@@ -95,7 +92,6 @@ def issue_cred():
             logging.debug("request received as user?")
 
             if schema_name == "payment_agreement":
-                #todo parse
                 pretty_print_obj(data)
                 config.agent_data.approved_transaction()
 
@@ -115,11 +111,6 @@ def issue_cred():
         resp = ob.issue_credential(data["credential_exchange_id"], cred)
 
     elif state == "credential_received":
-        #config.agent_data.credentials.append(
-        #    {
-        #        data["connection_id"]: data["credential_definition_id"]
-        #    }
-        #)
         log.debug("Stored credential of id: %s", data["credential_definition_id"])
 
         if config.role == "vendor":
@@ -129,7 +120,6 @@ def issue_cred():
 
         elif config.role == "user":
             schema_name = trans.get_schema_name(data["credential_definition_id"])
-            #print("==schema name: ", schema_name)
 
             if schema_name == "payment_agreement":
                 amount = get_cred_proposal_value(data, "amount")
@@ -166,7 +156,6 @@ def issue_cred():
                 config.agent_data.approved_transaction()
     return make_response(json.dumps({"code": "success"}), 200)
 
-## todo: use the webhooks to keep track of current states of packages etc
 @webhooks.route("/webhooks/topic/present_proof/", methods=["POST"])
 def present_proof():
     data = json.loads(request.data)
@@ -303,7 +292,6 @@ def present_proof():
             if data["verified"] == "true":
                 log.debug("Receipt proven")
                 endpoint = get_received_presentation_values(data, "payment_endpoint")
-                print("===========endpoint: ", endpoint)
                 config.agent_data.validate_agreement(endpoint)
 
 
@@ -325,8 +313,8 @@ def handle_problem():
 
 @webhooks.route("/webhooks/topic/<topicname>/", methods=["POST", "GET"])
 def catch(topicname):
-    print("got unhandled request of topic: ", topicname)
-    return make_response(json.dumps({"code":"not yet done"}), 501)
+    log.debug("got unhandled request of topic: %s", topicname)
+    return make_response(json.dumps({"code": "not yet done"}), 501)
 
 # for aesthetic printing of json objects
 def pretty_print_obj(json_dict):
@@ -358,6 +346,5 @@ def get_received_presentation_values(proposal, attr_name):
         if "requested_proof" in proposal["presentation"]:
             for attr in proposal["presentation"]["requested_proof"]["revealed_attrs"]:
                 if attr_name in attr:
-                    print(attr_name)
                     return proposal["presentation"]["requested_proof"]["revealed_attrs"][attr]["raw"]
     return False

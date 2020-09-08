@@ -1,9 +1,5 @@
 import subprocess
 import os
-import logging
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def start_aries(start_port, seed, label, genesis_url=None):
     ledger_url = os.getenv("LEDGER_URL")

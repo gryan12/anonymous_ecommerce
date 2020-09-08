@@ -4,8 +4,6 @@ import random
 import os
 import sys
 import time
-import urllib
-import base64
 
 from flask import Flask, request, make_response, render_template, redirect, url_for
 
@@ -29,9 +27,12 @@ app.register_blueprint(connections)
 app.register_blueprint(credentials)
 app.register_blueprint(shop)
 
-log = logging.getLogger('werkzeug')
-log.disabled = True
+flask_log = logging.getLogger('werkzeug')
+flask_log.disabled = True
 app.logger.disabled = True
+
+logging.basicConfig(level=logging.DEBUG, format=' --- %(name)s : %(message)s')
+log = logging.getLogger(__name__)
 
 
 #This file contains the routes for rendering html templates, and for initialising
@@ -87,40 +88,9 @@ def send_msg():
     message = {
         "content": message
     }
-    logging.debug("Message contents: %s", message["content"])
+    log.debug("Message contents: %s", message["content"])
     response = ob.send_message(message, config.agent_data.current_connection)
-    print(response)
     return make_response(json.dumps(response), 200)
-
-@app.route("/functest/", methods=["POST"])
-def test_search():
-    inc_json = request.json
-    if inc_json["type"] == "cred":
-        res = trans.is_credential_stored(inc_json["name"])
-        if res:
-            ans = "YES CRED IS STORED"
-            logging.debug("YES CRED IS STORED")
-        else:
-            ans = "CRED NOT STORED"
-            logging.debug("NO IT IS NOT")
-    elif inc_json["type"] == "proof":
-        res = trans.is_proof_validated(inc_json["cred_name"])
-        if res:
-            ans = "YES PROOF CONTAINING THIS CRED HAS BEEN VALIDATED AS TRU"
-            logging.debug("YES CRED IS STORED")
-        else:
-            ans = "PROOF CONTAINING THIS CRED IS NOT VALID"
-            logging.debug("NO IT IS NOT")
-    return make_response({"code": ans})
-
-
-def get_outstanding_events(role=None):
-    events = []
-    if role == "vendor":
-        if trans.have_received_proof_proposal("payment_agreement"):
-            events.append({
-                "type": "payment_request",
-            })
 
 ##### END interface routes
 
@@ -140,7 +110,7 @@ def register_did(ledger_url, seed=None, alias=None, role="TRUST_ANCHOR"):
         resp = json.loads(response.text)
     except json.JSONDecodeError as e:
         print(response.headers)
-        logging.debug("ERROR REGISTERING DID WITH THE LEDGER")
+        log.debug("ERROR REGISTERING DID WITH THE LEDGER")
         sys.exit(-1)
     return json.loads(response.text)
 
@@ -168,8 +138,6 @@ def input_json_invite(input_json):
     resp = ob.receive_invite(invite_json=input_json)
     return resp
 
-
-
 def output_json_invite():
     resp = ob.create_invite()
     config.agent_data.current_connection = resp["connection_id"]
@@ -178,10 +146,10 @@ def output_json_invite():
 def await_connection():
     while True:
         if not config.agent_data.active:
-            logging.debug("WAITING FOR CONNECTION")
+            log.debug("WAITING FOR CONNECTION")
             time.sleep(2)
         else:
-            logging.debug("CONNECTED")
+            log.debug("CONNECTED")
             return True
 def get_public_did():
     resp = ob.get_public_did()
@@ -191,9 +159,6 @@ def get_public_did():
     else:
         return None
 
-
-def flask_proc(host, port, debug=False):
-    app.run(host=host, port=port, static_folder=os.path.abspath(os.getcwd() + '/static'))
 
 def hasActiveConnection():
     resp = ob.get_connections()
@@ -205,13 +170,12 @@ def hasActiveConnection():
 
     for state in states:
         if state == 'active':
-            logging.debug("true")
+            log.debug("true")
             return True
     return False
 
 def getStageAndRole(credex_id):
     return ob.get_cred_ex_record(credex_id)
-
 
 def main():
     # get agent details from osenv, set in start_shop_agent script
@@ -221,16 +185,16 @@ def main():
     host = os.getenv("DOCKERHOST")
 
     if os.getenv("AGENT_RUNNING"):
-        logging.debug("AGENT IS ALREADY RUNNING")
+        log.debug("AGENT IS ALREADY RUNNING")
 
     ledger_url = os.getenv("LEDGER_URL")
     if not ledger_url:
         ledger_url = "http://" + host + ":9000"
 
-    logging.debug("Init controller with role: %s, listenting on port: %s", agent_role, str(start_port))
+    log.debug("Init controller with role: %s, listenting on port: %s", agent_role, str(start_port))
 
     if not start_port:
-        logging.debug("error: no assigned port")
+        log.debug("error: no assigned port")
         sys.exit(-1)
 
     ##init aries
@@ -242,7 +206,7 @@ def main():
 
     ## aca-py instance endpoint
     agent_url = "http://" + host + ":" + str(start_port + 1)
-    logging.debug("Agent url: %s", agent_url)
+    log.debug("Agent url: %s", agent_url)
     ob.set_agent_url(agent_url)
 
     start_aries(start_port, seed, agent_role)
@@ -265,10 +229,10 @@ def main():
         pub_did_resp = ob.get_public_did()
 
         did = pub_did_resp["result"]["did"]
-        logging.debug("pub did is: %s", did)
+        log.debug("pub did is: %s", did)
 
         os.environ[upper_role] = did
-        logging.debug("set env for public did of: %s as %s", upper_role, did)
+        log.debug("set env for public did of: %s as %s", upper_role, did)
 
         connection_id = output_json_invite()
         config.agent_data.connection_id = connection_id
@@ -277,5 +241,4 @@ def main():
 
 if __name__ == "__main__":
     config.setup()
-    logging.basicConfig(level=logging.DEBUG, format=' --- %(message)s')
     main()
