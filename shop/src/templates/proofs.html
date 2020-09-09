@@ -43,11 +43,11 @@
           {% endif %}
           {% if name == "User" %}
           <button class="btn btn-primary" id="propose_proof_payment" onclick="proposeProofOfPayment()">Propose Proof of Purchase </button>
-          <button class="btn btn-primary" id="propose_proof_payment_agreement" onclick="proposeProofOfPaymentAgreement()"> Make payment (Proof of agreement) </button>
-          <button class="btn btn-primary" id="propose_proof_of_ownership" onclick="proposeProofOfOwnership()"> Propose proof of ownership</button>
+          <button class="btn btn-primary" id="propose_proof_payment_agreement" onclick="proposeProofOfPaymentAgreement()"> Propose Proof of Payment Agreement </button>
+          <button class="btn btn-primary" id="propose_proof_of_ownership" onclick="proposeProofOfOwnership()"> Propose Proof of Ownership</button>
           {% endif %}
 
-          {% if name != "Bank" or name != "Shipper"%}
+          {% if name == "Vendor" or "User" %}
           <button class="btn btn-primary" id="issue_proof" onclick="requestProof()">
               {% if name == "Vendor" %}
               Request Proof of Payment
