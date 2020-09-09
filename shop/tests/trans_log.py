@@ -8,8 +8,9 @@ from ..src.support.outbound_routing import post, get, get_status, create_invite,
 
 #basic aries interaction tests
 class testTransFunctions(unittest.TestCase):
+    def __init__(self):
+        self.val1 = None
 
 
-    def
 
 

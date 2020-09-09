@@ -47,13 +47,11 @@
           <button class="btn btn-primary" id="propose_proof_of_ownership" onclick="proposeProofOfOwnership()"> Propose proof of ownership</button>
           {% endif %}
 
-          {% if name != "Bank" %}
+          {% if name != "Bank" or name != "Shipper"%}
           <button class="btn btn-primary" id="issue_proof" onclick="requestProof()">
               {% if name == "Vendor" %}
               Request Proof of Payment
-              {% elif name =="Shipper" %}
-              Request Proof of Package Ownership
-              {% elif name =="User" %}
+              {% elif name == "User" %}
               Request Proof of Package Status
               {% endif %}
           </button>
@@ -89,6 +87,13 @@
                            $('#proof_ex_hist').append("Attribute name:" + key.substring(2, key.length-5) + ", value: " + revealed[key]['raw'] + "<br>");
                    }
 
+                   if (results[i].presentation.requested_proof.hasOwnProperty("self_attested_attrs")) {
+                       var self_attested = results[i].presentation.requested_proof.self_attested_attrs
+                       $('#proof_ex_hist').append("Self Attested: <br>");
+                       for (var key in self_attested) {
+                               $('#proof_ex_hist').append("Attribute name:" + key.substring(2, key.length-5) + ", value: " + self_attested[key] + "<br>");
+                       }
+                   }
                }
                else if (results[i].hasOwnProperty("presentation_proposal_dict")) {
                     attributes = results[i].presentation_proposal_dict.presentation_proposal.attributes
